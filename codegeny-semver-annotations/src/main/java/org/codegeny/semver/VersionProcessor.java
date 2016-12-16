@@ -52,10 +52,15 @@ public class VersionProcessor extends AbstractProcessor {
 			String fullyQualifiedClassName = e.getEnclosingElement().accept(namer, null);
 			String methodName = e.getSimpleName().toString();
 
+			// TODO hash the following items
+
+			// hash FQCN
 			// hash methodName
 			// hash parameter types
 			// hash return type
 			// hash thrown types
+			// hash modifiers
+			// hash type parameters
 			
 			int hash = Objects.hash(fullyQualifiedClassName, methodName);
 			
@@ -72,6 +77,9 @@ public class VersionProcessor extends AbstractProcessor {
 
 		@Override
 		public Void visitType(TypeElement e, Set<Integer> p) {
+			
+			// TODO hash public type declaration (modifiers, type parameters, extends, implements)
+			
 			e.getEnclosedElements().stream().filter(VersionProcessor::filter).forEach(element -> element.accept(this, p));
 			return null;
 		}
@@ -168,7 +176,6 @@ public class VersionProcessor extends AbstractProcessor {
 			}
 			
 		} catch (IOException ioException) {
-			ioException.printStackTrace();
 			super.processingEnv.getMessager().printMessage(Kind.ERROR, "Failed to write semver.properties: " + ioException.getMessage()); 
 		}
 		
