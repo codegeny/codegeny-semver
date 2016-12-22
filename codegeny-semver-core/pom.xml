@@ -8,13 +8,13 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>codegeny-semver-annotations</artifactId>
+	<artifactId>codegeny-semver-core</artifactId>
 	
 	<dependencies>
 		<dependency>
-			<groupId>org.codegeny</groupId>
-			<artifactId>codegeny-semver-core</artifactId>
-			<version>0.0.1-SNAPSHOT</version>	
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>5.1</version>
 		</dependency>
 	</dependencies>
 

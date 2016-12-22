@@ -4,6 +4,10 @@
 !/pom.xml
 !/README.md
 !/LICENSE
+!/codegeny-semver-core
+/codegeny-semver-core/*
+!/codegeny-semver-core/pom.xml
+!/codegeny-semver-core/src/
 !/codegeny-semver-annotations
 /codegeny-semver-annotations/*
 !/codegeny-semver-annotations/pom.xml

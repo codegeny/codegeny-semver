@@ -78,9 +78,31 @@ Let's consider you are working on version `1.2.3-SNAPSHOT` and want to release; 
 Those versions numbers will be exported as system properties to `semver.releaseVersion` and `semver.snapshotVersion`.
 In turn, these properties can be used by the `maven-release-plugin` to perform the actual release.
 
-## Things to do
+## Things to do/answer
 
 - [ ] Find a better format for the public API than hashes
-- [ ] Allow the maven plugin to declare which dependencies are re-exported in the public API (meaning that the version calculator must take account of the possible change of versions in those dependencies)
+- [ ] Allow the maven plugin to declare which dependencies are re-exported in the public API (meaning that the version calculator must take account of the possible change of versions in those dependencies) unless each type used in API (superclass, return types, parameters) is also processed/hashed
 - [ ] Find how to handle multi-modules projects
 - [ ] Allow to specify that an abstract non-default abstract method is for internal or external implementation because if a new method is added to an interface that must be implemented by the client of the API (like a callback), this change must be considered as a major change (breaking the API) while a new method on an interface that is only implemented internally must be considered as a minor change
+- [ ] Consider using ASM to compare 2 jars and determine if their API is compatible
+
+## What should be part of the public API?
+
+### Packages
+
+- process each contained type
+
+### Types
+
+- fully classified class name
+- type arguments (how?)
+- recursively process superclass and interfaces
+- each (public || (non-public && annotated)) method, inner type
+
+### Methods
+
+- fully classified method name
+- type arguments (how?)
+- return type (how to allow covariance to not break the API?)
+- parameter types (how to allow contravariance to not break the API?)
+- thrown types (only checked exceptions?)

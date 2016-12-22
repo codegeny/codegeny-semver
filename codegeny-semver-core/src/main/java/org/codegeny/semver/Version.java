@@ -1,4 +1,4 @@
-package org.codegeny.semver.maven;
+package org.codegeny.semver;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -59,36 +59,30 @@ public final class Version implements Comparable<Version>, Serializable {
 
 	@Override
 	public int hashCode() {
-		return ((31 + this.major) * 31 + this.minor) * 31 + this.patch;
+		return ((31 + major) * 31 + minor) * 31 + patch;
 	}
 	
 	public Version nextMajorVersion() {
-		return new Version(this.major + 1, 0, 0);
+		return new Version(major + 1, 0, 0);
 	}
 	
 	public Version nextMinorVersion() {
-		return new Version(this.major, this.minor + 1, 0);
+		return new Version(major, minor + 1, 0);
 	}
 	
 	public Version nextPatchVersion() {
-		return new Version(this.major, this.minor, this.patch + 1);
+		return new Version(major, minor, patch + 1);
 	}
 	
 	public Version previousVersion() {
-		if (this.patch > 0) {
-			return new Version(this.major, this.minor, this.patch - 1);
+		if (this.patch == 0) {
+			throw new IllegalStateException("Unable to determine previous version");
 		}
-		if (this.minor > 0) {
-			return new Version(this.major, this.minor - 1, 0);
-		}
-		if (this.major > 0) {
-			return new Version(this.major - 1, 0, 0);
-		}
-		throw new IllegalStateException("No previous version exist for " + this);
+		return new Version(major, minor, patch - 1);
 	}
 	
 	@Override
 	public String toString() {
-		return String.format("%d.%d.%d", this.major, this.minor, this.patch);
+		return String.format("%d.%d.%d", major, minor, patch);
 	}
 }
