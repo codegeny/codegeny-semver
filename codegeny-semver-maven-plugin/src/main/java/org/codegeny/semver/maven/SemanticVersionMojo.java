@@ -1,15 +1,6 @@
 package org.codegeny.semver.maven;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -24,11 +15,9 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.repository.RepositorySystem;
 import org.codegeny.semver.Change;
+import org.codegeny.semver.Module;
+import org.codegeny.semver.ModuleChangeChecker;
 import org.codegeny.semver.Version;
-import org.codegeny.semver.model.API;
-import org.codegeny.semver.model.APIClassPath;
-import org.codegeny.semver.rule.RuleEngine;
-import org.codegeny.semver.rule.RuleEngineFactory;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.impl.ArtifactResolver;
@@ -103,7 +92,12 @@ public class SemanticVersionMojo extends AbstractMojo {
 
 		try {
 			
-			Change change = compareJars(new File(mavenProject.getBuild().getOutputDirectory()), previousArtifactFile);
+			ModuleChangeChecker moduleChangeChecker = ModuleChangeChecker.newConfiguredInstance((f, a) -> getLog().info(String.format(f,  a)));
+			
+			Module currentModule = new Module(new File(mavenProject.getBuild().getOutputDirectory()));
+			Module previousModule = new Module(previousArtifactFile);
+			
+			Change change = moduleChangeChecker.check(previousModule, currentModule);
 			
 			Version releaseVersion = change.nextVersion(currentVersion);
 			Version snapshotVersion = releaseVersion.nextPatchVersion();
@@ -114,58 +108,5 @@ public class SemanticVersionMojo extends AbstractMojo {
 		} catch (Exception exception) {
 			throw new MojoExecutionException("Cannot compare APIs", exception);
 		} 
-	}
-	
-	private Stream<String> recursive(File file) {
-		if (file.isDirectory()) {
-			return Stream.of(file.listFiles()).flatMap(this::recursive);
-		} else {
-			return Stream.of(file.getAbsolutePath()).filter(n -> n.endsWith(".class"));
-		}
-	}
-
-	protected Change compareJars(File currentFolder, File previousJar) throws IOException, MojoExecutionException {
-		
-		// TODO expand class path to maven dependencies
-		
-		APIClassPath defaultClassPath = APIClassPath.classLoader(Thread.currentThread().getContextClassLoader());
-		
-		Set<String> currentClassNames = recursive(currentFolder)
-				.map(n -> n.replace("/", "."))
-				.map(n -> n.substring(0, n.length() - ".class".length()))
-				.collect(Collectors.toSet());
-		
-		APIClassPath currentClassPath = resource -> {
-			File f = new File(currentFolder, resource);
-			return f.exists() ? new FileInputStream(f) : null;
-		};
-		
-		try (JarFile previousJarFile = new JarFile(previousJar)) {
-		
-			API currentAPI = new API(currentClassPath.or(defaultClassPath));
-			
-			Set<String> previousClassNames = Collections.list(previousJarFile.entries()).stream()
-				.map(e -> e.getName())
-				.filter(n -> n.endsWith(".class"))
-				.map(n -> n.replace("/", "."))
-				.map(n -> n.substring(0, n.length() - ".class".length()))
-				.collect(Collectors.toSet());
-			
-			APIClassPath previousClassPath = resource -> {
-				JarEntry e = previousJarFile.getJarEntry(resource);
-				return e == null ? null : previousJarFile.getInputStream(e);
-			};
-			
-			API previousAPI = new API(previousClassPath.or(defaultClassPath));
-			
-			RuleEngineFactory factory = new RuleEngineFactory();
-			RuleEngine engine = factory.createRuleEngine();
-			
-			Set<String> allClasses = new HashSet<>();
-			allClasses.addAll(previousClassNames);
-			allClasses.addAll(currentClassNames);
-			
-			return engine.compare(previousAPI, currentAPI, allClasses);
-		}
 	}
 }
