@@ -22,8 +22,26 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 	}
 	
 	public static ModuleChangeChecker newConfiguredInstance(Logger logger) {
+		
+		Set<Metadata> metaSet = new HashSet<>();
+		ServiceLoader.load(Metadata.class).forEach(metaSet::add);
+		Metadata metadata = metaSet.stream().reduce(Metadata::and).orElseGet(Metadata.Default::new);
+		
+		logger.log("%s", metadata);
+		
 		ModuleChangeChecker moduleChangeChecker = new ModuleChangeChecker(logger);
-		ServiceLoader.load(ClassChangeChecker.class).forEach(moduleChangeChecker::addClassChangeChecker);
+		ServiceLoader.load(ClassChangeChecker.class).forEach(c -> {
+			
+			if (c instanceof MetadataAware) {
+				((MetadataAware) c).setMetadata(metadata);
+			}
+			
+			if (c instanceof LoggerAware) {
+				((LoggerAware) c).setLogger(logger);
+			}
+			
+			moduleChangeChecker.addClassChangeChecker(c);
+		});
 		return moduleChangeChecker;
 	}
 	
@@ -54,10 +72,10 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 		
 		try (
 				
-			ClassRealm commonRealm = classWorld.newRealm("common");
+			ClassRealm commonRealm = classWorld.newRealm("common", Thread.currentThread().getContextClassLoader());
 			ClassRealm previousRealm = commonRealm.createChildRealm("previous");
 			ClassRealm currentRealm = commonRealm.createChildRealm("current")) {
-		
+			
 			commonDependencies.forEach(commonRealm::addURL);
 			
 			previousRealm.addURL(toURL(previous.getMain()));

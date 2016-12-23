@@ -15,6 +15,7 @@
 			<groupId>org.codegeny</groupId>
 			<artifactId>codegeny-semver-core</artifactId>
 			<version>0.0.1-SNAPSHOT</version>	
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 

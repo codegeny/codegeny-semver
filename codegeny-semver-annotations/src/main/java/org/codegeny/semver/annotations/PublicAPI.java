@@ -10,5 +10,5 @@ public @interface PublicAPI {
 	
 	boolean exclude() default false;
 	
-	boolean internalImplementation() default false;
+	boolean internal() default false;
 }

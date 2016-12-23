@@ -3,6 +3,7 @@ package org.codegeny.semver.checkers;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+import org.codegeny.semver.Metadata;
 import org.junit.runners.Parameterized.Parameters;
 
 public class TypeArgumentCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
@@ -21,6 +22,6 @@ public class TypeArgumentCheckerTest extends AbstractChangeCheckerTest<Class<?>>
 	}
 
 	public TypeArgumentCheckerTest() {
-		super(new TypeArgumentChecker());
+		super(new TypeArgumentChecker(), new Metadata() {});
 	}
 }

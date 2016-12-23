@@ -5,6 +5,9 @@ import java.util.Collection;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.ChangeChecker;
+import org.codegeny.semver.LoggerAware;
+import org.codegeny.semver.Metadata;
+import org.codegeny.semver.MetadataAware;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,8 +50,18 @@ public abstract class AbstractChangeCheckerTest<T> {
 	@Parameter(1)
 	public T previous;
 
-	public AbstractChangeCheckerTest(ChangeChecker<T> checker) {
+	protected AbstractChangeCheckerTest(ChangeChecker<T> checker) {
+		this(checker, new Metadata.Default());
+	}
+	
+	protected AbstractChangeCheckerTest(ChangeChecker<T> checker, Metadata metadata) {
 		this.checker = checker;
+		if (checker instanceof MetadataAware) {
+			((MetadataAware) checker).setMetadata(metadata);		
+		}
+		if (checker instanceof LoggerAware) {
+			((LoggerAware) checker).setLogger((f, a) -> System.out.printf(f, a).println());
+		}
 	}
 	
 	@Test

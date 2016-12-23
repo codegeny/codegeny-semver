@@ -11,13 +11,22 @@ import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.ClassChangeChecker;
+import org.codegeny.semver.Logger;
+import org.codegeny.semver.LoggerAware;
+import org.codegeny.semver.Metadata;
+import org.codegeny.semver.MetadataAware;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class TypeArgumentChecker implements ClassChangeChecker {
+public class TypeArgumentChecker implements ClassChangeChecker, MetadataAware, LoggerAware {
+	
+	private Logger logger;
+	
+	private Metadata metadata;
 	
 	@Override
 	public Change check(Class<?> previous, Class<?> current) {
+		logger.log("is public %s %s?", metadata.isPublicAPI(previous), metadata.isPublicAPI(current));
 		if (previous == null || current == null) {
 			return Change.PATCH;
 		}
@@ -68,5 +77,15 @@ public class TypeArgumentChecker implements ClassChangeChecker {
 	
 	private int position(TypeVariable<?> typeVariable) {
 		return Stream.of(typeVariable.getGenericDeclaration().getTypeParameters()).map(TypeVariable::getName).collect(Collectors.toList()).indexOf(typeVariable.getName());
+	}
+	
+	@Override
+	public void setLogger(Logger logger) {
+		this.logger = logger;
+	}
+	
+	@Override
+	public void setMetadata(Metadata metadata) {
+		this.metadata = metadata;
 	}
 }
