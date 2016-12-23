@@ -26,7 +26,6 @@ public class TypeArgumentChecker implements ClassChangeChecker, MetadataAware, L
 	
 	@Override
 	public Change check(Class<?> previous, Class<?> current) {
-		logger.log("is public %s %s?", metadata.isPublicAPI(previous), metadata.isPublicAPI(current));
 		if (previous == null || current == null) {
 			return Change.PATCH;
 		}

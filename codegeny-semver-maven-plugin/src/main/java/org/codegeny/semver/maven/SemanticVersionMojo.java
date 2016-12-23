@@ -44,16 +44,16 @@ public class SemanticVersionMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${repositorySystemSession}", readonly = true, required = true)
 	private RepositorySystemSession repositorySystemSession;
 
-	@Parameter(defaultValue = "false")
+	@Parameter(defaultValue = "false", property = "semver.verbose")
 	private boolean verbose;
 
-	@Parameter(defaultValue = "false")
+	@Parameter(defaultValue = "false", property = "semver.skip")
 	private boolean skip;
 
-	@Parameter(defaultValue = "semver.releaseVersion")
+	@Parameter(defaultValue = "semver.releaseVersion", property = "semver.releaseVersion.target")
 	private String releaseVersionName;
 
-	@Parameter(defaultValue = "semver.snapshotVersion")
+	@Parameter(defaultValue = "semver.snapshotVersion", property = "semver.snapshotVersion.target")
 	private String snapshotVersionName;
 
 	public void execute() throws MojoExecutionException {

@@ -15,10 +15,10 @@ For the moment, only a few ones are implemented.
 - [ ] Add API type to API package
 - [ ] Delete API type from API package
 - [ ] Add non-`public` (non-API) type to API package
-- [ ] Delete non-`public` (non-API) type from API package
-- [ ] Change non-`public` (non-API) type in API package to make `public` (API)
-- [ ] Change `public` type in API package to make non-`public`
-- [ ] Change kind of API type (class, interface, enum, or annotation type)
+- [X] Delete non-`public` (non-API) type from API package
+- [X] Change non-`public` (non-API) type in API package to make `public` (API)
+- [X] Change `public` type in API package to make non-`public`
+- [X] Change kind of API type (class, interface, enum, or annotation type)
 
 ### API interfaces
 
@@ -36,8 +36,8 @@ For the moment, only a few ones are implemented.
 - [ ] Add API type member
 - [ ] Delete API type member
 - [ ] Re-order field, method, and type member declarations
-- [ ] Add type parameter
-- [ ] Delete type parameter
+- [X] Add type parameter
+- [X] Delete type parameter
 - [ ] Re-order type parameters
 - [X] Rename type parameter
 - [ ] Add, delete, or change type bounds of type parameter
@@ -99,8 +99,8 @@ For the moment, only a few ones are implemented.
 - [ ] Change non-`abstract` to `abstract`
 - [ ] Change `final` to non-`final`
 - [ ] Change non-`final` to `final`
-- [ ] Add type parameter
-- [ ] Delete type parameter
+- [X] Add type parameter
+- [X] Delete type parameter
 - [ ] Re-order type parameters
 - [X] Rename type parameter
 - [ ] Add, delete, or change type bounds of type parameter
