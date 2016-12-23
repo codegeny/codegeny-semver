@@ -19,7 +19,6 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 	public static ModuleChangeChecker newConfiguredInstance() {
 		java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ModuleChangeChecker.class.getName());
 		return newConfiguredInstance((f, a) -> logger.info(() -> String.format(f, a)));
-	
 	}
 	
 	public static ModuleChangeChecker newConfiguredInstance(Logger logger) {

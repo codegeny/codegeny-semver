@@ -2,50 +2,173 @@
 
 # codegeny-semver
 
-This library tries to compute compliant [semantic versions](http://semver.org) for your maven project.
+This library tries to compute compliant [semantic versions](http://semver.org) for your maven project following [these rules](https://wiki.eclipse.org/Evolving_Java-based_APIs_2).
 
-## Annotate your public API
+## Rules
 
-To declare you public API (to be used by external parties), you must annotate every package, type or method that is part of the API with `@PublicAPI`.
+For the moment, only a few ones are implemented.
 
-```java
-@PublicAPI
-public class MyService {
-	
-	public void someMethod() { ... }
+### API packages
 
-	@PublicAPI(exclude = true)
-	public void somePublicMethodThatShouldNotBePublic() { ... }
-}
-```
+- [ ] Add API package
+- [ ] Delete API package
+- [ ] Add API type to API package
+- [ ] Delete API type from API package
+- [ ] Add non-`public` (non-API) type to API package
+- [ ] Delete non-`public` (non-API) type from API package
+- [ ] Change non-`public` (non-API) type in API package to make `public` (API)
+- [ ] Change `public` type in API package to make non-`public`
+- [ ] Change kind of API type (class, interface, enum, or annotation type)
 
-If you annotate a package (in `package-info.java`), all its classes will be considered annotated with `@PublicAPI` (but not its sub-packages).
-If you annotate a type with `@PublicAPI`, any public member (including inner types) it contains will be considered as part of the public API.
+### API interfaces
 
-You can exclude some methods/types from the public API with `@PublicAPI(exclude = true)` (for example, if you need a default constructor for technical reasons but it should not be part of the API).
-You could also force a protected/private member to be part of the public API by annotating it.
+- [ ] Add `abstract` method
+- [ ] Add `default` method
+- [ ] Add `static` method
+- [ ] Delete API method 
+- [ ] Move API method up type hierarchy
+- [ ] Move API method down type hierarchy
+- [ ] Add API field
+- [ ] Delete API field
+- [ ] Expand superinterface set (direct or inherited)
+- [ ] Contract superinterface set (direct or inherited)
+- [ ] Add, delete, or change `static` initializers
+- [ ] Add API type member
+- [ ] Delete API type member
+- [ ] Re-order field, method, and type member declarations
+- [ ] Add type parameter
+- [ ] Delete type parameter
+- [ ] Re-order type parameters
+- [X] Rename type parameter
+- [ ] Add, delete, or change type bounds of type parameter
+- [ ] Add element to annotation type
+- [ ] Delete element from annotation type
 
-For the moment, each part of the public API (type, field, method, constructor) will be hashed in `META-INF/semver.properties`. This is an *experimental* way of creating the fingerprint for the public API.
-In the future, a better format needs to be found (I am working on it).
+#### API intefaces - methods
 
-| previous hashes | current hashes | result
-| --------------- | -------------- | ------
-| 1, 2, 3         | 1, 2, 5        | major version (previous hash 3 could not be found in current version, this breaks the public API)
-| 1, 2, 3         | 1, 2, 3, 4     | minor version (all previous hashes were found in the current version, but new ones were added, the public API is still compatible but has been augmented with new classes/methods...)
-| 1, 2, 3         | 1, 2, 3        | patch version (the two hash sets are identical, the public API for the two versions are identical)
+- [ ] Change formal parameter name
+- [ ] Change method name
+- [ ] Add or delete formal parameter
+- [ ] Change type of a formal parameter
+- [ ] Change result type (including `void`)
+- [ ] Add checked exceptions thrown
+- [ ] Add unchecked exceptions thrown
+- [ ] Delete checked exceptions thrown
+- [ ] Delete unchecked exceptions thrown
+- [ ] Re-order list of exceptions thrown
+- [ ] Change `static` to non-`static`
+- [ ] Change non-`static` to `static`
+- [ ] Change `default` to `abstract`
+- [ ] Change `abstract` to `default`
+- [ ] Add type parameter
+- [ ] Delete type parameter
+- [ ] Re-order type parameters
+- [ ] Rename type parameter
+- [ ] Add, delete, or change type bounds of type parameter
+- [ ] Change last parameter from array type `T[]` to variable arity `T...`
+- [ ] Change last parameter from variable arity `T...` to array type `T[]`
+- [ ] Add `default` clause to annotation type element
+- [ ] Change `default` clause on annotation type element
+- [ ] Delete `default` clause from annotation type element
 
-To annotate your project, you will need to import the following dependency:
+#### API intefaces - fields
 
-```xml
-<dependency>
-	<groupId>org.codegeny</groupId>
-	<artifactId>codegeny-semver-annotations</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<optional>true</optional>
-</dependency>
-```
+- [ ] Change type of API field
+- [ ] Change value of API field
 
-This jar only contains the `@PublicAPI` annotation and an annotation processor to generate the `META-INF/semver.properties`.
+## API classes
+
+- [ ] Add API method
+- [ ] Delete API method
+- [ ] Move API method up type hierarchy
+- [ ] Move API method down type hierarchy
+- [ ] Add API constructor
+- [ ] Delete API constructor
+- [ ] Add API field
+- [ ] Delete API field
+- [ ] Expand superinterface set (direct or inherited)
+- [ ] Contract superinterface set (direct or inherited)
+- [ ] Expand superclass set (direct or inherited)
+- [ ] Contract superclass set (direct or inherited)
+- [ ] Add, delete, or change `static` or instance initializers
+- [ ] Add API type member
+- [ ] Delete API type member
+- [ ] Re-order field, method, constructor, and type member declarations
+- [ ] Add or delete non-API members; that is, `private` or `default` access fields, methods, constructors, and type members
+- [ ] Change `abstract` to non-`abstract`
+- [ ] Change non-`abstract` to `abstract`
+- [ ] Change `final` to non-`final`
+- [ ] Change non-`final` to `final`
+- [ ] Add type parameter
+- [ ] Delete type parameter
+- [ ] Re-order type parameters
+- [X] Rename type parameter
+- [ ] Add, delete, or change type bounds of type parameter
+- [ ] Rename enum constant
+- [ ] Add, change, or delete enum constant arguments
+- [ ] Add, change, or delete enum constant class body
+- [ ] Add enum constant
+- [ ] Delete enum constant
+- [ ] Re-order enum constants
+
+#### API classes - methods and constructors
+
+- [ ] Change body of method or constructor
+- [ ] Change formal parameter name
+- [ ] Change method name
+- [ ] Add or delete formal parameter
+- [ ] Change type of a formal parameter
+- [ ] Change result type (including `void`)
+- [ ] Add checked exceptions thrown
+- [ ] Add unchecked exceptions thrown
+- [ ] Delete checked exceptions thrown
+- [ ] Delete unchecked exceptions thrown
+- [ ] Re-order list of exceptions thrown
+- [ ] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
+- [ ] Increase access; that is, from `protected` access to `public` access
+- [ ] Change `abstract` to non-`abstract`
+- [ ] Change non-`abstract` to `abstract`
+- [ ] Change `final` to non-`final`
+- [ ] Change non-`final` to `final`
+- [ ] Change `static` to non-`static`
+- [ ] Change non-`static` to `static`
+- [ ] Change `native` to non-`native`
+- [ ] Change non-`native` to `native`
+- [ ] Change `synchronized` to non-`synchronized`
+- [ ] Change non-`synchronized` to `synchronized`
+- [ ] Add type parameter
+- [ ] Delete type parameter
+- [ ] Re-order type parameters
+- [ ] Rename type parameter
+- [ ] Add, delete, or change type bounds of type parameter
+- [ ] Change last parameter from array type `T[]` to variable arity `T...`
+- [ ] Change last parameter from variable arity `T...` to array type `T[]`
+
+#### API classes - fields
+
+- [ ] Change type of API field
+- [ ] Change value of API field
+- [ ] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
+- [ ] Increase access; that is, from `protected` access to `public` access
+- [ ] Change `final` to non-`final`
+- [ ] Change non-`final` to `final`
+- [ ] Change `static` to non-`static`
+- [ ] Change non-`static` to `static`
+- [ ] Change `transient` to non-`transient`
+- [ ] Change non-`transient` to `transient`
+
+#### API classes - type members
+
+- [ ] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
+- [ ] Increase access; that is, from `protected` access to `public` access
+
+### Non-API packages
+
+- [ ] Add non-API package
+- [ ] Delete non-API package
+- [ ] Add class or interface to non-API package
+- [ ] Delete class or interface in a non-API package
+- [ ] Change existing class or interface in non-API package
 
 ## Compute semantic version numbers in your maven build
 
@@ -66,7 +189,7 @@ When you need to release your project, you'll have to use the following maven pu
 </plugin>
 ```
 
-This plugin will retrieve the previous release of your project and compare the `META-INF/semver.properties`.
+This plugin will retrieve the previous release of your project and compare the classes.
 
 Let's consider you are working on version `1.2.3-SNAPSHOT` and want to release; the plugin will compare this version with the previous one (which is `1.2.2`) and give the versions for your release and the next snapshot:
 
@@ -74,35 +197,3 @@ Let's consider you are working on version `1.2.3-SNAPSHOT` and want to release; 
 | -------- | ---------------- | ---------------- | ---------------- |
 | release  | `2.0.0`          | `1.3.0`          | `1.2.3`          |
 | snapshot | `2.0.1-SNAPSHOT` | `1.3.1-SNAPSHOT` | `1.2.4-SNAPSHOT` |
-
-Those versions numbers will be exported as system properties to `semver.releaseVersion` and `semver.snapshotVersion`.
-In turn, these properties can be used by the `maven-release-plugin` to perform the actual release.
-
-## Things to do/answer
-
-- [ ] Find a better format for the public API than hashes
-- [ ] Allow the maven plugin to declare which dependencies are re-exported in the public API (meaning that the version calculator must take account of the possible change of versions in those dependencies) unless each type used in API (superclass, return types, parameters) is also processed/hashed
-- [ ] Find how to handle multi-modules projects
-- [ ] Allow to specify that an abstract non-default abstract method is for internal or external implementation because if a new method is added to an interface that must be implemented by the client of the API (like a callback), this change must be considered as a major change (breaking the API) while a new method on an interface that is only implemented internally must be considered as a minor change
-- [ ] Consider using ASM to compare 2 jars and determine if their API is compatible
-
-## What should be part of the public API?
-
-### Packages
-
-- process each contained type
-
-### Types
-
-- fully classified class name
-- type arguments (how?)
-- recursively process superclass and interfaces
-- each (public || (non-public && annotated)) method, inner type
-
-### Methods
-
-- fully classified method name
-- type arguments (how?)
-- return type (how to allow covariance to not break the API?)
-- parameter types (how to allow contravariance to not break the API?)
-- thrown types (only checked exceptions?)
