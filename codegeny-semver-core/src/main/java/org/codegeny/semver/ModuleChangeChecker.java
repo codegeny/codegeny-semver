@@ -1,14 +1,18 @@
 package org.codegeny.semver;
 
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.classworlds.realm.ClassRealm;
@@ -30,6 +34,7 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 		logger.log("%s", metadata);
 		
 		ModuleChangeChecker moduleChangeChecker = new ModuleChangeChecker(logger);
+		
 		ServiceLoader.load(ClassChangeChecker.class).forEach(c -> {
 			
 			if (c instanceof MetadataAware) {
@@ -42,10 +47,24 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 			
 			moduleChangeChecker.addClassChangeChecker(c);
 		});
+		
+		ServiceLoader.load(MethodChangeChecker.class).forEach(c -> {
+			
+			if (c instanceof MetadataAware) {
+				((MetadataAware) c).setMetadata(metadata);
+			}
+			
+			if (c instanceof LoggerAware) {
+				((LoggerAware) c).setLogger(logger);
+			}
+			
+			moduleChangeChecker.addMethodChangeChecker(c);
+		});
 		return moduleChangeChecker;
 	}
 	
 	private final Set<ClassChangeChecker> classChangeCheckers = new HashSet<>();
+	private final Set<MethodChangeChecker> methodChangeCheckers = new HashSet<>();
 	private final Logger logger;
 
 	public ModuleChangeChecker(Logger logger) {
@@ -54,6 +73,10 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 
 	public void addClassChangeChecker(ClassChangeChecker classChangeChecker) {
 		this.classChangeCheckers.add(classChangeChecker);
+	}
+	
+	public void addMethodChangeChecker(MethodChangeChecker methodChangeChecker) {
+		this.methodChangeCheckers.add(methodChangeChecker);
 	}
 	
 	@Override
@@ -112,7 +135,35 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 						break;
 					}
 				}
-		
+				
+				Map<Object, Method> previousMethods = Stream.of(previousClass.getDeclaredMethods()).collect(toMap(m -> key(m), m -> m));
+				Map<Object, Method> currentMethods = Stream.of(currentClass.getDeclaredMethods()).collect(toMap(m -> key(m), m -> m));
+				
+				Set<Object> methodKeys = new HashSet<>();
+				methodKeys.addAll(previousMethods.keySet());
+				methodKeys.addAll(currentMethods.keySet());
+				
+				for (Object methodKey : methodKeys) {
+					
+					Method previousMethod = previousMethods.get(methodKey);
+					Method currentMethod = currentMethods.get(methodKey);
+					
+					for (MethodChangeChecker checker : this.methodChangeCheckers) {
+					
+						checks++;
+						
+						classResult = classResult.combine(checker.check(previousMethod, currentMethod));
+						
+						if (classResult == Change.MAJOR) {
+							break;
+						}
+					}
+					
+					if (classResult == Change.MAJOR) {
+						break;
+					}
+				}
+				
 				logger.log("%s :: %s (%d)", classResult, className, checks);
 				
 				globalResult = globalResult.combine(classResult);
@@ -129,6 +180,10 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 		} catch (IOException ioException) {
 			throw new UncheckedIOException(ioException);
 		}
+	}
+	
+	private Object key(Method method) {
+		return new HashKey(method.getName(), new HashKey((Object[]) method.getParameterTypes()));
 	}
 	
 	private Class<?> getClass(String className, ClassRealm realm) {

@@ -51,7 +51,7 @@ For the moment, only a few ones are implemented.
 - [ ] Add or delete formal parameter
 - [ ] Change type of a formal parameter
 - [ ] Change result type (including `void`)
-- [ ] Add checked exceptions thrown
+- [X] Add checked exceptions thrown
 - [ ] Add unchecked exceptions thrown
 - [ ] Delete checked exceptions thrown
 - [ ] Delete unchecked exceptions thrown
@@ -119,7 +119,7 @@ For the moment, only a few ones are implemented.
 - [ ] Add or delete formal parameter
 - [ ] Change type of a formal parameter
 - [ ] Change result type (including `void`)
-- [ ] Add checked exceptions thrown
+- [X] Add checked exceptions thrown
 - [ ] Add unchecked exceptions thrown
 - [ ] Delete checked exceptions thrown
 - [ ] Delete unchecked exceptions thrown

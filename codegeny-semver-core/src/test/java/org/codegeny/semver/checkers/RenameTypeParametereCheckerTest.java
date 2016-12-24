@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import org.codegeny.semver.Metadata;
 import org.junit.runners.Parameterized.Parameters;
 
-public class TypeArgumentCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
+public class RenameTypeParametereCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
 	
 	interface Test1<A, E extends Supplier<C>, C> {}
 	interface Test2<E, A extends Supplier<D>, D> {}
@@ -21,7 +21,7 @@ public class TypeArgumentCheckerTest extends AbstractChangeCheckerTest<Class<?>>
 		);
 	}
 
-	public TypeArgumentCheckerTest() {
-		super(new TypeArgumentChecker(), new Metadata() {});
+	public RenameTypeParametereCheckerTest() {
+		super(new RenameTypeParameterChecker(), new Metadata() {});
 	}
 }
