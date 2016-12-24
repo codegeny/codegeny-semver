@@ -102,6 +102,7 @@ public class SemanticVersionMojo extends AbstractMojo {
 			Version releaseVersion = change.nextVersion(currentVersion);
 			Version snapshotVersion = releaseVersion.nextPatchVersion();
 			
+			getLog().info("Change type " + change);
 			getLog().info("Release version " + releaseVersion);
 			getLog().info("Snapshot version " + snapshotVersion + "-SNAPSHOT");
 			

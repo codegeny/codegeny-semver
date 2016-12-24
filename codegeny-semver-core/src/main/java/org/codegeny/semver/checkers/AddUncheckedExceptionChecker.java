@@ -2,19 +2,19 @@ package org.codegeny.semver.checkers;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Executable;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
-import org.codegeny.semver.MethodChangeChecker;
+import org.codegeny.semver.ExecutableChangeChecker;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class AddUncheckedExceptionChecker implements MethodChangeChecker {
+public class AddUncheckedExceptionChecker implements ExecutableChangeChecker {
 
 	@Override
-	public Change check(Method previous, Method current) {
+	public Change check(Executable previous, Executable current) {
 		if (previous == null || current == null) {
 			return Change.PATCH;
 		}
@@ -33,8 +33,8 @@ public class AddUncheckedExceptionChecker implements MethodChangeChecker {
 		return Exception.class.isAssignableFrom(type) && !RuntimeException.class.isAssignableFrom(type);
 	}
 	
-	private Set<String> getCheckedNames(Method method) {
-		return Stream.of(method.getExceptionTypes()).filter(this::isChecked).map(Class::getName).collect(toSet());
+	private Set<String> getCheckedNames(Executable executable) {
+		return Stream.of(executable.getExceptionTypes()).filter(this::isChecked).map(Class::getName).collect(toSet());
 	}
 	
 }

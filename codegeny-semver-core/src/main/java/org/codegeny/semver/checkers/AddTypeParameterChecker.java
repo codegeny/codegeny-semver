@@ -1,14 +1,16 @@
 package org.codegeny.semver.checkers;
 
+import java.lang.reflect.GenericDeclaration;
+
 import org.codegeny.semver.Change;
-import org.codegeny.semver.ClassChangeChecker;
+import org.codegeny.semver.GenericDeclarationChangeChecker;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class AddTypeParameterChecker implements ClassChangeChecker {
+public class AddTypeParameterChecker implements GenericDeclarationChangeChecker {
 
 	@Override
-	public Change check(Class<?> previous, Class<?> current) {
+	public Change check(GenericDeclaration previous, GenericDeclaration current) {
 		if (previous == null || current == null) {
 			return Change.PATCH;
 		}

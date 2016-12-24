@@ -1,13 +1,13 @@
 package org.codegeny.semver.checkers;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Executable;
 import java.sql.SQLException;
 import java.util.Collection;
 
 import org.junit.runners.Parameterized.Parameters;
 
-public class AddUncheckedExceptionCheckerTest extends AbstractChangeCheckerTest<Method> {
+public class AddUncheckedExceptionCheckerTest extends AbstractChangeCheckerTest<Executable> {
 	
 	interface TestType1 {
 		

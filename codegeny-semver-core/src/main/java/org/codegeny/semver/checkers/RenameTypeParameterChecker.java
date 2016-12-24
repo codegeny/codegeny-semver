@@ -1,6 +1,7 @@
 package org.codegeny.semver.checkers;
 
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -10,18 +11,23 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
-import org.codegeny.semver.ClassChangeChecker;
+import org.codegeny.semver.GenericDeclarationChangeChecker;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class RenameTypeParameterChecker implements ClassChangeChecker {
+public class RenameTypeParameterChecker implements GenericDeclarationChangeChecker {
 	
 	@Override
-	public Change check(Class<?> previous, Class<?> current) {
+	public Change check(GenericDeclaration previous, GenericDeclaration current) {
 		if (previous == null || current == null) {
 			return Change.PATCH;
 		}
-		if (compareTypes(previous.getTypeParameters(), current.getTypeParameters())) {
+		Type[] previousTypeParameters = previous.getTypeParameters();
+		Type[] currentTypeParameters = current.getTypeParameters();
+		if (previousTypeParameters.length != currentTypeParameters.length) {
+			return Change.PATCH;
+		}
+		if (compareTypes(previousTypeParameters, currentTypeParameters)) {
 			return Change.PATCH;
 		}
 		return Change.MAJOR;

@@ -1,12 +1,13 @@
 package org.codegeny.semver.checkers;
 
+import java.lang.reflect.GenericDeclaration;
 import java.util.Collection;
 import java.util.function.Supplier;
 
 import org.codegeny.semver.Metadata;
 import org.junit.runners.Parameterized.Parameters;
 
-public class RenameTypeParametereCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
+public class RenameTypeParametereCheckerTest extends AbstractChangeCheckerTest<GenericDeclaration> {
 	
 	interface Test1<A, E extends Supplier<C>, C> {}
 	interface Test2<E, A extends Supplier<D>, D> {}

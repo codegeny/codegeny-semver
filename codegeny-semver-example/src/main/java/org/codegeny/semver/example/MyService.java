@@ -5,7 +5,7 @@ import java.io.File;
 import org.codegeny.semver.annotations.PublicAPI;
 
 @PublicAPI
-public class MyService {
+public class MyService<A> {
 	
 	public void someMethod(int hello, String world) {}
 	

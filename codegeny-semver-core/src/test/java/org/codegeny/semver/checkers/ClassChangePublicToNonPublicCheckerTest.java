@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.junit.runners.Parameterized.Parameters;
 
-public class ChangePublicToNonPublicCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
+public class ClassChangePublicToNonPublicCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
 	
 	public interface TestType1 {}
 	private interface TestType2 {}
@@ -20,7 +20,7 @@ public class ChangePublicToNonPublicCheckerTest extends AbstractChangeCheckerTes
 		);
 	}
 	
-	public ChangePublicToNonPublicCheckerTest() {
-		super(new ChangePublicToNonPublicChecker());
+	public ClassChangePublicToNonPublicCheckerTest() {
+		super(new ClassChangePublicToNonPublicChecker());
 	}
 }

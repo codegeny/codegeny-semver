@@ -168,7 +168,7 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 				
 				Change classResult = combine(checkers);
 				
-				logger.log("%s :: %s (%d)", classResult, className, counter.get());
+//				logger.log("%s :: %s (%d)", classResult, className, counter.get());
 				
 				globalResult = globalResult.combine(classResult);
 				
@@ -188,13 +188,18 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 	
 	private <T> Change check(T previous, T current, Iterable<ChangeChecker<? super T>> checkers, AtomicInteger counter) {
 		Change result = Change.PATCH;
+		logger.log("+ %s", previous);
+		logger.log("+ %s", current);
 		for (ChangeChecker<? super T> checker : checkers) {
 			counter.incrementAndGet();
-			result = result.combine(checker.check(previous, current));
+			Change change = checker.check(previous, current);
+			logger.log("  - %s : %s", change, checker.getClass().getSimpleName());
+			result = result.combine(change);
 			if (result == Change.MAJOR) {
 				break;
 			}
 		}
+		logger.log("= %s", result);
 		return result;
 	}
 	
