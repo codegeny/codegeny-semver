@@ -11,7 +11,7 @@ public class ChangePublicToNonPublicCheckerTest extends AbstractChangeCheckerTes
 	
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
-		return checks(
+		return classes(
 			patch(TestType1.class, TestType1.class), // no change
 			major(TestType1.class, TestType2.class), // incompatible
 			

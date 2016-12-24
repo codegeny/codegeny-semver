@@ -13,7 +13,7 @@ public class DeleteTypeParameterCheckerTest extends AbstractChangeCheckerTest<Ge
 	
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
-		return checks(
+		return classes(
 			patch(TestType1.class, TestType1.class), // no change
 			patch(TestType1.class, TestType2.class), // not applicable
 			patch(TestType1.class, TestType3.class), // not applicable

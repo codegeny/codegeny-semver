@@ -7,14 +7,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.codehaus.plexus.classworlds.ClassWorld;
@@ -22,11 +28,6 @@ import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
 
 public class ModuleChangeChecker implements ChangeChecker<Module> {
-	
-	public static ModuleChangeChecker newConfiguredInstance() {
-		java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ModuleChangeChecker.class.getName());
-		return newConfiguredInstance((f, a) -> logger.info(() -> String.format(f, a)));
-	}
 	
 	public static ModuleChangeChecker newConfiguredInstance(Logger logger) {
 		
@@ -40,7 +41,6 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 			if (c instanceof MetadataAware) {
 				((MetadataAware) c).setMetadata(metadata);
 			}
-			
 			if (c instanceof LoggerAware) {
 				((LoggerAware) c).setLogger(logger);
 			}
@@ -158,117 +158,17 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 					continue;
 				}
 				
-				Change classResult = Change.PATCH;
-				int checks = 0;
+				AtomicInteger counter = new AtomicInteger();
 				
-				for (ChangeChecker<? super Class<?>> checker : this.classChangeCheckers) {
-					
-					checks++;
-					
-					classResult = classResult.combine(checker.check(previousClass, currentClass));
-					
-					if (classResult == Change.MAJOR) {
-						break;
-					}
-				}
+				List<Supplier<Change>> checkers = new LinkedList<>();
+				checkers.add(() -> check(previousClass, currentClass, classChangeCheckers, counter));
+				checkers.add(() -> check(previousClass.getDeclaredFields(), currentClass.getDeclaredFields(), fieldChangeCheckers, counter, Field::getName));
+				checkers.add(() -> check(previousClass.getDeclaredMethods(), currentClass.getDeclaredMethods(), methodChangeCheckers, counter, this::key));
+				checkers.add(() -> check(previousClass.getDeclaredConstructors(), currentClass.getDeclaredConstructors(), constructorChangeCheckers, counter, this::key));
 				
-				if (classResult == Change.MAJOR) {
-					break;
-				}
+				Change classResult = combine(checkers);
 				
-				Map<String, Field> previousFields = Stream.of(previousClass.getDeclaredFields()).collect(toMap(Field::getName, f -> f));
-				Map<String, Field> currentFields = Stream.of(currentClass.getDeclaredFields()).collect(toMap(Field::getName, f -> f));
-				
-				Set<String> fieldNames = new HashSet<>();
-				fieldNames.addAll(previousFields.keySet());
-				fieldNames.addAll(currentFields.keySet());
-				
-				for (Object fieldName : fieldNames) {
-					
-					Field previousField = previousFields.get(fieldName);
-					Field currentField = currentFields.get(fieldName);
-					
-					for (ChangeChecker<? super Field> checker : this.fieldChangeCheckers) {
-					
-						checks++;
-						
-						classResult = classResult.combine(checker.check(previousField, currentField));
-						
-						if (classResult == Change.MAJOR) {
-							break;
-						}
-					}
-					
-					if (classResult == Change.MAJOR) {
-						break;
-					}
-				}
-				
-				if (classResult == Change.MAJOR) {
-					break;
-				}
-				
-				Map<Object, Method> previousMethods = Stream.of(previousClass.getDeclaredMethods()).collect(toMap(m -> key(m), m -> m));
-				Map<Object, Method> currentMethods = Stream.of(currentClass.getDeclaredMethods()).collect(toMap(m -> key(m), m -> m));
-				
-				Set<Object> methodKeys = new HashSet<>();
-				methodKeys.addAll(previousMethods.keySet());
-				methodKeys.addAll(currentMethods.keySet());
-				
-				for (Object methodKey : methodKeys) {
-					
-					Method previousMethod = previousMethods.get(methodKey);
-					Method currentMethod = currentMethods.get(methodKey);
-					
-					for (ChangeChecker<? super Method> checker : this.methodChangeCheckers) {
-					
-						checks++;
-						
-						classResult = classResult.combine(checker.check(previousMethod, currentMethod));
-						
-						if (classResult == Change.MAJOR) {
-							break;
-						}
-					}
-					
-					if (classResult == Change.MAJOR) {
-						break;
-					}
-				}
-				
-				if (classResult == Change.MAJOR) {
-					break;
-				}
-				
-				Map<Object, Constructor<?>> previousConstructors = Stream.of(previousClass.getDeclaredConstructors()).collect(toMap(m -> key(m), m -> m));
-				Map<Object, Constructor<?>> currentCosntructors = Stream.of(currentClass.getDeclaredConstructors()).collect(toMap(m -> key(m), m -> m));
-				
-				Set<Object> constructorKeys = new HashSet<>();
-				constructorKeys.addAll(previousConstructors.keySet());
-				constructorKeys.addAll(currentCosntructors.keySet());
-				
-				for (Object constructorKey : constructorKeys) {
-					
-					Constructor<?> previousConstructor = previousConstructors.get(constructorKey);
-					Constructor<?> currentConstructor = currentCosntructors.get(constructorKey);
-					
-					for (ChangeChecker<? super Constructor<?>> checker : this.constructorChangeCheckers) {
-					
-						checks++;
-						
-						classResult = classResult.combine(checker.check(previousConstructor, currentConstructor));
-						
-						if (classResult == Change.MAJOR) {
-							break;
-						}
-					}
-					
-					if (classResult == Change.MAJOR) {
-						break;
-					}
-				}
-				
-				logger.log("%s :: %s (%d)", classResult, className, checks);
+				logger.log("%s :: %s (%d)", classResult, className, counter.get());
 				
 				globalResult = globalResult.combine(classResult);
 				
@@ -286,6 +186,50 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 		}
 	}
 	
+	private <T> Change check(T previous, T current, Iterable<ChangeChecker<? super T>> checkers, AtomicInteger counter) {
+		Change result = Change.PATCH;
+		for (ChangeChecker<? super T> checker : checkers) {
+			counter.incrementAndGet();
+			result = result.combine(checker.check(previous, current));
+			if (result == Change.MAJOR) {
+				break;
+			}
+		}
+		return result;
+	}
+	
+	private <T> Change check(T[] previouses, T[] currents,  Iterable<ChangeChecker<? super T>> checkers,  AtomicInteger counter, Function<T, Object> keyer) {
+		Map<Object, T> previousMap = Stream.of(previouses).collect(toMap(keyer, m -> m));
+		Map<Object, T> currentMap = Stream.of(currents).collect(toMap(keyer, m -> m));
+		Set<Object> keys = new HashSet<>();
+		keys.addAll(previousMap.keySet());
+		keys.addAll(currentMap.keySet());
+		Change result = Change.PATCH;
+		for (Object key : keys) {
+			T previous = previousMap.get(key);
+			T current = currentMap.get(key);
+			if (previous == current) {
+				continue;
+			}
+			result = result.combine(check(previous, current, checkers, counter));
+			if (result == Change.MAJOR) {
+				break;
+			}
+		}
+		return result;
+	}
+	
+	private Change combine(Iterable<Supplier<Change>> checkers) {
+		Change result = Change.PATCH;
+		for (Supplier<Change> checker : checkers) {
+			result = result.combine(checker.get());
+			if (result == Change.MAJOR) {
+				break;
+			}
+		}
+		return result;
+	}
+	
 	private Class<?> getClass(String className, ClassRealm realm) {
 		try {
 			return realm.loadClass(className);
@@ -294,12 +238,12 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 		}
 	}
 	
-	private Object key(Method method) {
-		return new HashKey(method.getName(), new HashKey((Object[]) method.getParameterTypes()));
+	private Object key(Executable executable) {
+		return new HashKey(Stream.of(executable.getParameterTypes()).map(Class::getName).toArray(i -> new Object[i]));
 	}
 	
-	private Object key(Constructor<?> constructor) {
-		return new HashKey((Object[]) constructor.getParameterTypes());
+	private Object key(Method method) {
+		return new HashKey(method.getName(), key((Executable) method));
 	}
 	
 	private URL toURL(File file) {

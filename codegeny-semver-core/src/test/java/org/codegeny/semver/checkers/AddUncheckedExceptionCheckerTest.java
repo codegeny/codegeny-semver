@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.stream.Stream;
 
 import org.junit.runners.Parameterized.Parameters;
 
@@ -32,7 +31,7 @@ public class AddUncheckedExceptionCheckerTest extends AbstractChangeCheckerTest<
 	
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
-		return checks(
+		return methods(
 			patch(TestType1.class, TestType1.class), // no change
 			major(TestType1.class, TestType2.class), // altered API and not compatible
 			major(TestType1.class, TestType3.class), // altered API and not compatible
@@ -58,22 +57,4 @@ public class AddUncheckedExceptionCheckerTest extends AbstractChangeCheckerTest<
 	public AddUncheckedExceptionCheckerTest() {
 		super(new AddUncheckedExceptionChecker());
 	}
-	
-	protected static Object major(Class<?> previous, Class<?> current) {
-		return major(method(previous), method(current));
-	}
-	
-	protected static Object minor(Class<?> previous, Class<?> current) {
-		return minor(method(previous), method(current));
-	}
-	
-	protected static Object patch(Class<?> previous, Class<?> current) {
-		return patch(method(previous), method(current));
-	}
-	
-	protected static Method method(Class<?> klass) {
-		return Stream.of(klass.getDeclaredMethods()).findFirst().get();
-	}
-	
-	
 }

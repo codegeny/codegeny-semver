@@ -1,7 +1,12 @@
 package org.codegeny.semver.checkers;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.ChangeChecker;
@@ -17,39 +22,118 @@ import org.junit.runners.Parameterized.Parameter;
 @RunWith(Parameterized.class)
 public abstract class AbstractChangeCheckerTest<T> {
 	
-	protected static final String NAME = "[{index}] {0} = {1} :: {2}";
+	protected static class ClassData extends Data<Class<?>> {
 
-	protected static <T> Object check(Change expectedChange, T previous, T current) {
-		return new Object[] { expectedChange, previous, current };
+		public ClassData(Change expectedChange, Class<?> previous, Class<?> current) {
+			super(expectedChange, previous, current);
+		}
+		
+		public ConstructorData constructor() {
+			return new ConstructorData(getExpectedChange(), getPrevious().getDeclaredConstructors()[0], getCurrent().getDeclaredConstructors()[0]);
+		}
+		
+		public FieldData field() {
+			return new FieldData(getExpectedChange(), getPrevious().getDeclaredFields()[0], getCurrent().getDeclaredFields()[0]);
+		}
+		
+		public MethodData method() {
+			return new MethodData(getExpectedChange(), getPrevious().getDeclaredMethods()[0], getCurrent().getDeclaredMethods()[0]);
+		}
 	}
 	
-	protected static Collection<?> checks(Object... dataSet) {
+	protected static class ConstructorData extends Data<Constructor<?>> {
+
+		public ConstructorData(Change expectedChange, Constructor<?> previous, Constructor<?> current) {
+			super(expectedChange, previous, current);
+		}
+	}
+	
+	protected abstract static class Data<T> {
+		
+		private final T current;
+		private final Change expectedChange;
+		private final T previous;
+		
+		public Data(Change expectedChange, T previous, T current) {
+			this.expectedChange = expectedChange;
+			this.previous = previous;
+			this.current = current;
+		}
+
+		public T getCurrent() {
+			return current;
+		}
+
+		public Change getExpectedChange() {
+			return expectedChange;
+		}
+
+		public T getPrevious() {
+			return previous;
+		}
+	}
+	
+	protected static class FieldData extends Data<Field> {
+
+		public FieldData(Change expectedChange, Field previous, Field current) {
+			super(expectedChange, previous, current);
+		}
+	}
+	
+	protected static class MethodData extends Data<Method> {
+
+		public MethodData(Change expectedChange, Method previous, Method current) {
+			super(expectedChange, previous, current);
+		}
+	}
+	
+	protected static final String NAME = "[{index}] {0} = {1} :: {2}";
+
+	private static ClassData check(Change expectedChange, Class<?> previous, Class<?> current) {
+		return new ClassData(expectedChange, previous, current);
+	}
+	
+	protected static Collection<?> checks(Data<?>... dataSet) {
 		return Arrays.asList(dataSet);
 	}
 	
-	protected static <T> Object major(T previous, T current) {
+	protected static Collection<?> classes(ClassData... dataSet) {
+		return checks(dataSet);
+	}
+	
+	protected static Collection<?> constructors(ClassData... dataSet) {
+		return transform(ClassData::constructor, dataSet);
+	}
+	
+	protected static Collection<?> fields(ClassData... dataSet) {
+		return transform(ClassData::field, dataSet);
+	}
+	
+	protected static ClassData major(Class<?> previous, Class<?> current) {
 		return check(Change.MAJOR, previous, current);
 	}
 	
-	protected static <T> Object minor(T previous, T current) {
+	protected static Collection<?> methods(ClassData... dataSet) {
+		return transform(ClassData::method, dataSet);
+	}
+	
+	protected static ClassData minor(Class<?> previous, Class<?> current) {
 		return check(Change.MINOR, previous, current);
 	}
 	
-	protected static <T> Object patch(T previous, T current) {
+	protected static ClassData patch(Class<?> previous, Class<?> current) {
 		return check(Change.PATCH, previous, current);
+	}
+	
+	private static Collection<?> transform(Function<ClassData, Data<?>> function, ClassData... dataSet) {
+		return checks(Stream.of(dataSet).map(function).toArray(i -> new Data<?>[i]));
 	}
 	
 	private final ChangeChecker<T> checker;
 	
-	@Parameter(2)
-	public T current;
+	@Parameter
+	public Data<T> data;
 	
-	@Parameter(0)
-	public Change expectedChange;
-	
-	@Parameter(1)
-	public T previous;
-
 	protected AbstractChangeCheckerTest(ChangeChecker<T> checker) {
 		this(checker, new Metadata.Default());
 	}
@@ -66,6 +150,6 @@ public abstract class AbstractChangeCheckerTest<T> {
 	
 	@Test
 	public void test() {
-		Assert.assertEquals(expectedChange, checker.check(previous, current));
+		Assert.assertEquals(data.getExpectedChange(), checker.check(data.getPrevious(), data.getCurrent()));
 	}
 }

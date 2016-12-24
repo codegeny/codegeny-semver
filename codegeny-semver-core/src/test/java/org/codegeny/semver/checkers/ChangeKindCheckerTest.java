@@ -13,7 +13,7 @@ public class ChangeKindCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
 	
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
-		return checks(
+		return classes(
 			patch(TestType1.class, TestType1.class), // no change
 			major(TestType1.class, TestType2.class), // altered API and not compatible
 			major(TestType1.class, TestType3.class), // altered API and not compatible

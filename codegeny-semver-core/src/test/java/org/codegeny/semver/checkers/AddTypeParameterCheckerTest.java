@@ -12,7 +12,7 @@ public class AddTypeParameterCheckerTest extends AbstractChangeCheckerTest<Class
 	
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
-		return checks(
+		return classes(
 			patch(TestType1.class, TestType1.class), // no change
 			minor(TestType1.class, TestType2.class), // altered API but still compatible
 			minor(TestType1.class, TestType3.class), // altered API but still compatible

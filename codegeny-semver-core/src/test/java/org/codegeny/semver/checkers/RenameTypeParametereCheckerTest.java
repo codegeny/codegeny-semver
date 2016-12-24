@@ -14,7 +14,7 @@ public class RenameTypeParametereCheckerTest extends AbstractChangeCheckerTest<C
 	
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
-		return checks(
+		return classes(
 			patch(Test1.class, Test2.class), //
 			major(Test2.class, Test3.class), //
 			major(Test3.class, Test1.class)  //
