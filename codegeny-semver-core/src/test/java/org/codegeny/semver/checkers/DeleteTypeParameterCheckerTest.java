@@ -1,10 +1,11 @@
 package org.codegeny.semver.checkers;
 
+import java.lang.reflect.GenericDeclaration;
 import java.util.Collection;
 
 import org.junit.runners.Parameterized.Parameters;
 
-public class DeleteTypeParameterCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
+public class DeleteTypeParameterCheckerTest extends AbstractChangeCheckerTest<GenericDeclaration> {
 	
 	interface TestType1 {}
 	interface TestType2<A> {}
