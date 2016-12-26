@@ -2,6 +2,7 @@ package org.codegeny.semver;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public interface Metadata {
 
@@ -33,22 +34,22 @@ public interface Metadata {
 	}
 	
 	default boolean isImplementedByClient(Class<?> klass) {
-		return true;
+		return !Modifier.isFinal(klass.getModifiers());
 	}
 	
 	default boolean isImplementedByClient(Method method) {
-		return true;
+		return isImplementedByClient(method.getDeclaringClass()) && !Modifier.isFinal(method.getModifiers());
 	}
 	
 	default boolean isPublicAPI(Class<?> klass) {
-		return true;
+		return Modifier.isPublic(klass.getModifiers());
 	}
 	
 	default boolean isPublicAPI(Field field) {
-		return true;
+		return isPublicAPI(field.getDeclaringClass()) && !Modifier.isPrivate(field.getModifiers());
 	}
 	
 	default boolean isPublicAPI(Method method) {
-		return true;
+		return isPublicAPI(method.getDeclaringClass()) && !Modifier.isPrivate(method.getModifiers());
 	}
 }

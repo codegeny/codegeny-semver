@@ -29,15 +29,15 @@ public abstract class AbstractChangeCheckerTest<T> {
 		}
 		
 		public ConstructorData constructor() {
-			return new ConstructorData(getExpectedChange(), getPrevious().getDeclaredConstructors()[0], getCurrent().getDeclaredConstructors()[0]);
+			return new ConstructorData(getExpectedChange(), Stream.of(getPrevious().getDeclaredConstructors()).findFirst().orElse(null), Stream.of(getCurrent().getDeclaredConstructors()).findFirst().orElse(null));
 		}
 		
 		public FieldData field() {
-			return new FieldData(getExpectedChange(), getPrevious().getDeclaredFields()[0], getCurrent().getDeclaredFields()[0]);
+			return new FieldData(getExpectedChange(), Stream.of(getPrevious().getDeclaredFields()).findFirst().orElse(null), Stream.of(getCurrent().getDeclaredFields()).findFirst().orElse(null));
 		}
 		
 		public MethodData method() {
-			return new MethodData(getExpectedChange(), getPrevious().getDeclaredMethods()[0], getCurrent().getDeclaredMethods()[0]);
+			return new MethodData(getExpectedChange(), Stream.of(getPrevious().getDeclaredMethods()).findFirst().orElse(null), Stream.of(getCurrent().getDeclaredMethods()).findFirst().orElse(null));
 		}
 	}
 	
