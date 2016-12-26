@@ -7,7 +7,7 @@ import java.util.Collection;
 
 import org.junit.runners.Parameterized.Parameters;
 
-public class AddUncheckedExceptionCheckerTest extends AbstractChangeCheckerTest<Executable> {
+public class RemoveCheckedExceptionCheckerTest extends AbstractChangeCheckerTest<Executable> {
 	
 	interface TestType1 {
 		
@@ -33,28 +33,28 @@ public class AddUncheckedExceptionCheckerTest extends AbstractChangeCheckerTest<
 	public static Collection<?> parameters() {
 		return methods(
 			patch(TestType1.class, TestType1.class), // no change
-			major(TestType1.class, TestType2.class), // altered API and not compatible
-			major(TestType1.class, TestType3.class), // altered API and not compatible
-			major(TestType1.class, TestType4.class), // altered API and not compatible
+			patch(TestType1.class, TestType2.class), // not applicable
+			patch(TestType1.class, TestType3.class), // not applicable
+			patch(TestType1.class, TestType4.class), // not applicable
 			
-			patch(TestType2.class, TestType1.class), // not applicable
+			major(TestType2.class, TestType1.class), // altered API and not compatible
 			patch(TestType2.class, TestType2.class), // no change
 			major(TestType2.class, TestType3.class), // altered API and not compatible
-			major(TestType2.class, TestType4.class), // altered API and not compatible
+			patch(TestType2.class, TestType4.class), // not applicable
 			
-			patch(TestType3.class, TestType1.class), // not applicable
+			major(TestType3.class, TestType1.class), // altered API and not compatible
 			major(TestType3.class, TestType2.class), // altered API and not compatible
 			patch(TestType3.class, TestType3.class), // no change
-			major(TestType3.class, TestType4.class), // altered API and not compatible
+			patch(TestType3.class, TestType4.class), // not applicable
 			
-			patch(TestType4.class, TestType1.class), // not applicable
-			patch(TestType4.class, TestType2.class), // not applicable
-			patch(TestType4.class, TestType3.class), // not applicable
+			major(TestType4.class, TestType1.class), // altered API and not compatible
+			major(TestType4.class, TestType2.class), // altered API and not compatible
+			major(TestType4.class, TestType3.class), // altered API and not compatible
 			patch(TestType4.class, TestType4.class)  // no change
 		);
 	}
 	
-	public AddUncheckedExceptionCheckerTest() {
-		super(new AddUncheckedExceptionChecker());
+	public RemoveCheckedExceptionCheckerTest() {
+		super(new RemoveCheckedExceptionChecker());
 	}
 }

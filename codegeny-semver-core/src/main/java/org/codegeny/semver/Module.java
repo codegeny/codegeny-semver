@@ -35,6 +35,10 @@ public class Module {
 		}
 	}
 
+	public Set<File> getArchives() {
+		return Stream.concat(Stream.of(main), dependencies.stream()).collect(toSet());
+	}
+	
 	public Set<String> getClassNames() {
 		if (main.isFile()) { // jar
 			try (JarFile jarFile = new JarFile(main)) {
@@ -49,14 +53,6 @@ public class Module {
 		}
 	}
 	
-	public Set<File> getDependencies() {
-		return dependencies;
-	}
-	
-	public File getMain() {
-		return main;
-	}
-	
 	private String getRelativeFileName(File file) {
 		return file.getAbsolutePath().substring(main.getAbsolutePath().length());
 	}
@@ -65,7 +61,7 @@ public class Module {
 		return PATTERN.matcher(fileName).matches();
 	}
 	
-	public String toClassName(String classFileName) {
+	private String toClassName(String classFileName) {
 		return classFileName.substring(0, classFileName.length() - ".class".length()).replace('/', '.');
 	}
 }

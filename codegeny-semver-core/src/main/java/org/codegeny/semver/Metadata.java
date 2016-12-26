@@ -1,5 +1,6 @@
 package org.codegeny.semver;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -51,5 +52,9 @@ public interface Metadata {
 	
 	default boolean isPublicAPI(Method method) {
 		return isPublicAPI(method.getDeclaringClass()) && !Modifier.isPrivate(method.getModifiers());
+	}
+	
+	default boolean isPublicAPI(Constructor<?> constructor) {
+		return isPublicAPI(constructor.getDeclaringClass()) && !Modifier.isPrivate(constructor.getModifiers());
 	}
 }

@@ -134,12 +134,15 @@ public abstract class AbstractChangeCheckerTest<T> {
 	@Parameter
 	public Data<T> data;
 	
+	private final Metadata metadata;
+	
 	protected AbstractChangeCheckerTest(ChangeChecker<T> checker) {
 		this(checker, new Metadata.Default());
 	}
 	
 	protected AbstractChangeCheckerTest(ChangeChecker<T> checker, Metadata metadata) {
 		this.checker = checker;
+		this.metadata = metadata;
 		if (checker instanceof MetadataAware) {
 			((MetadataAware) checker).setMetadata(metadata);		
 		}
@@ -150,6 +153,9 @@ public abstract class AbstractChangeCheckerTest<T> {
 	
 	@Test
 	public void test() {
+//		if (data.getPrevious() != null && !metadata.isPublicAPI(data.getPrevious()) && data.getCurrent() != null && !metadata.isPublicAPI(data.getCurrent())) {
+//			Assert.assertEquals(data.getExpectedChange(), Change.PATCH)
+//		}
 		Assert.assertEquals(data.getExpectedChange(), checker.check(data.getPrevious(), data.getCurrent()));
 	}
 }

@@ -11,7 +11,7 @@ import org.codegeny.semver.ExecutableChangeChecker;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class AddUncheckedExceptionChecker implements ExecutableChangeChecker {
+public class AddCheckedExceptionChecker implements ExecutableChangeChecker {
 
 	@Override
 	public Change check(Executable previous, Executable current) {
