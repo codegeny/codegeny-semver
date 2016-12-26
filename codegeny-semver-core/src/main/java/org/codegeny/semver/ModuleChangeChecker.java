@@ -11,6 +11,7 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,12 +24,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.codehaus.plexus.classworlds.ClassWorld;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
-import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
-
 public class ModuleChangeChecker implements ChangeChecker<Module> {
-	
+		
 	public static ModuleChangeChecker newConfiguredInstance(Logger logger) {
 		
 		Set<Metadata> metaSet = new HashSet<>();
@@ -127,21 +124,14 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 		previousDependencies.removeAll(commonDependencies);
 		currentDependencies.remove(commonDependencies);
 		
-		ClassWorld classWorld = new ClassWorld();
+		previousDependencies.add(toURL(previous.getMain()));
+		currentDependencies.add(toURL(current.getMain()));
 		
 		try (
 				
-			ClassRealm commonRealm = classWorld.newRealm("common", Thread.currentThread().getContextClassLoader());
-			ClassRealm previousRealm = commonRealm.createChildRealm("previous");
-			ClassRealm currentRealm = commonRealm.createChildRealm("current")) {
-			
-			commonDependencies.forEach(commonRealm::addURL);
-			
-			previousRealm.addURL(toURL(previous.getMain()));
-			previousDependencies.forEach(previousRealm::addURL);
-			
-			currentRealm.addURL(toURL(current.getMain()));
-			currentDependencies.forEach(currentRealm::addURL);
+			URLClassLoader commonLoader = new URLClassLoader(commonDependencies.stream().toArray(i -> new URL[i]), Thread.currentThread().getContextClassLoader());
+			URLClassLoader previousLoader = new URLClassLoader(previousDependencies.stream().toArray(i -> new URL[i]), commonLoader);
+			URLClassLoader currentLoader = new URLClassLoader(currentDependencies.stream().toArray(i -> new URL[i]), commonLoader)) {
 			
 			Set<String> classNames = new HashSet<>();
 			classNames.addAll(previous.getClassNames());
@@ -151,8 +141,12 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 			
 			for (String className : classNames) {
 				
-				Class<?> previousClass = getClass(className, previousRealm);
-				Class<?> currentClass = getClass(className, currentRealm);
+				Class<?> previousClass = getClass(className, previousLoader);
+				Class<?> currentClass = getClass(className, currentLoader);
+				
+				if (previousClass == null && currentClass == null) {
+					throw new RuntimeException("Could not load " + className + " at all!!!");
+				}
 				
 				if (previousClass == currentClass) { // same classloader
 					continue;
@@ -179,8 +173,6 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 			
 			return globalResult;
 			
-		} catch (DuplicateRealmException duplicateRealmException) {
-			throw new RuntimeException(duplicateRealmException);
 		} catch (IOException ioException) {
 			throw new UncheckedIOException(ioException);
 		}
@@ -235,7 +227,7 @@ public class ModuleChangeChecker implements ChangeChecker<Module> {
 		return result;
 	}
 	
-	private Class<?> getClass(String className, ClassRealm realm) {
+	private Class<?> getClass(String className, ClassLoader realm) {
 		try {
 			return realm.loadClass(className);
 		} catch (ClassNotFoundException classNotFoundException) {

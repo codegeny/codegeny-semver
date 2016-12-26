@@ -4,23 +4,30 @@ import java.util.Collection;
 
 import org.junit.runners.Parameterized.Parameters;
 
-public class ClassChangePublicToNonPublicCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
+public class AddEnumConstantCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
 	
-	public interface TestType1 {}
-	private interface TestType2 {}
+	enum TestType1 {
+		
+		ONE
+	}
+	
+	enum TestType2 {
+		
+		ONE, TWO
+	}
 	
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
 		return classes(
 			patch(TestType1.class, TestType1.class), // no change
-			major(TestType1.class, TestType2.class), // incompatible
+			minor(TestType1.class, TestType2.class), // altered API but still compatible
 			
 			patch(TestType2.class, TestType1.class), // not applicable
 			patch(TestType2.class, TestType2.class)  // no change
 		);
 	}
 	
-	public ClassChangePublicToNonPublicCheckerTest() {
-		super(new ClassChangePublicToNonPublicChecker());
+	public AddEnumConstantCheckerTest() {
+		super(new AddEnumConstantChecker());
 	}
 }

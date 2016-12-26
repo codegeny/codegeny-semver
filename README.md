@@ -15,7 +15,7 @@ For the moment, only a few ones are implemented.
 - [ ] Add API type to API package
 - [ ] Delete API type from API package
 - [ ] Add non-`public` (non-API) type to API package
-- [X] Delete non-`public` (non-API) type from API package
+- [ ] Delete non-`public` (non-API) type from API package
 - [X] Change non-`public` (non-API) type in API package to make `public` (API)
 - [X] Change `public` type in API package to make non-`public`
 - [X] Change kind of API type (class, interface, enum, or annotation type)
@@ -65,8 +65,8 @@ For the moment, only a few ones are implemented.
 - [ ] Re-order type parameters
 - [ ] Rename type parameter
 - [ ] Add, delete, or change type bounds of type parameter
-- [ ] Change last parameter from array type `T[]` to variable arity `T...`
-- [ ] Change last parameter from variable arity `T...` to array type `T[]`
+- [X] Change last parameter from array type `T[]` to variable arity `T...`
+- [X] Change last parameter from variable arity `T...` to array type `T[]`
 - [ ] Add `default` clause to annotation type element
 - [ ] Change `default` clause on annotation type element
 - [ ] Delete `default` clause from annotation type element
@@ -136,13 +136,13 @@ For the moment, only a few ones are implemented.
 - [ ] Change non-`native` to `native`
 - [ ] Change `synchronized` to non-`synchronized`
 - [ ] Change non-`synchronized` to `synchronized`
-- [ ] Add type parameter
-- [ ] Delete type parameter
+- [X] Add type parameter
+- [X] Delete type parameter
 - [ ] Re-order type parameters
-- [ ] Rename type parameter
+- [X] Rename type parameter
 - [ ] Add, delete, or change type bounds of type parameter
-- [ ] Change last parameter from array type `T[]` to variable arity `T...`
-- [ ] Change last parameter from variable arity `T...` to array type `T[]`
+- [X] Change last parameter from array type `T[]` to variable arity `T...`
+- [X] Change last parameter from variable arity `T...` to array type `T[]`
 
 #### API classes - fields
 

@@ -19,6 +19,6 @@ public enum Change {
 	}
 	
 	public Change combine(Change that) {
-		return compareTo(that) < 0 ? this : that;
+		return that == null || compareTo(that) < 0 ? this : that;
 	}
 }
