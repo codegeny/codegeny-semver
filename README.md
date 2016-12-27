@@ -1,4 +1,5 @@
-![Status experimental](https://img.shields.io/badge/status-experimental-red.svg)
+![Project status](https://img.shields.io/badge/status-experimental-red.svg)
+[![Build Status](https://img.shields.io/travis/codegeny/codegeny-semver.svg)](https://travis-ci.org/codegeny/codegeny-semver)
 
 # codegeny-semver
 
