@@ -3,7 +3,7 @@
 
 # codegeny-semver
 
-This library tries to compute compliant [semantic versions](http://semver.org) for your maven project following [these rules](https://wiki.eclipse.org/Evolving_Java-based_APIs_2).
+This library tries to compute compliant [semantic versions](http://semver.org) for your maven project by following [these rules](https://wiki.eclipse.org/Evolving_Java-based_APIs_2).
 
 ## Rules
 
@@ -42,35 +42,35 @@ For the moment, only a few ones are implemented.
 - [ ] Re-order type parameters
 - [X] Rename type parameter
 - [ ] Add, delete, or change type bounds of type parameter
-- [ ] Add element to annotation type
-- [ ] Delete element from annotation type
+- [X] Add element to annotation type
+- [X] Delete element from annotation type
 
 #### API intefaces - methods
 
 - [ ] Change formal parameter name
-- [ ] Change method name
+- [ ] ~~Change method name~~
 - [ ] Add or delete formal parameter
 - [ ] Change type of a formal parameter
 - [ ] Change result type (including `void`)
 - [X] Add checked exceptions thrown
-- [ ] Add unchecked exceptions thrown
-- [ ] Delete checked exceptions thrown
-- [ ] Delete unchecked exceptions thrown
-- [ ] Re-order list of exceptions thrown
-- [ ] Change `static` to non-`static`
-- [ ] Change non-`static` to `static`
+- [ ] ~~Add unchecked exceptions thrown~~
+- [X] Delete checked exceptions thrown
+- [ ] ~~Delete unchecked exceptions thrown~~
+- [ ] ~~Re-order list of exceptions thrown~~
+- [X] Change `static` to non-`static`
+- [X] Change non-`static` to `static`
 - [ ] Change `default` to `abstract`
 - [ ] Change `abstract` to `default`
-- [ ] Add type parameter
-- [ ] Delete type parameter
+- [X] Add type parameter
+- [X] Delete type parameter
 - [ ] Re-order type parameters
-- [ ] Rename type parameter
+- [X] Rename type parameter
 - [ ] Add, delete, or change type bounds of type parameter
 - [X] Change last parameter from array type `T[]` to variable arity `T...`
 - [X] Change last parameter from variable arity `T...` to array type `T[]`
-- [ ] Add `default` clause to annotation type element
-- [ ] Change `default` clause on annotation type element
-- [ ] Delete `default` clause from annotation type element
+- [X] Add `default` clause to annotation type element
+- [X] Change `default` clause on annotation type element
+- [X] Delete `default` clause from annotation type element
 
 #### API intefaces - fields
 
@@ -91,52 +91,52 @@ For the moment, only a few ones are implemented.
 - [ ] Contract superinterface set (direct or inherited)
 - [ ] Expand superclass set (direct or inherited)
 - [ ] Contract superclass set (direct or inherited)
-- [ ] Add, delete, or change `static` or instance initializers
+- [ ] ~~Add, delete, or change `static` or instance initializers~~
 - [ ] Add API type member
 - [ ] Delete API type member
 - [ ] Re-order field, method, constructor, and type member declarations
 - [ ] Add or delete non-API members; that is, `private` or `default` access fields, methods, constructors, and type members
-- [ ] Change `abstract` to non-`abstract`
-- [ ] Change non-`abstract` to `abstract`
-- [ ] Change `final` to non-`final`
-- [ ] Change non-`final` to `final`
+- [X] Change `abstract` to non-`abstract`
+- [X] Change non-`abstract` to `abstract`
+- [X] Change `final` to non-`final`
+- [X] Change non-`final` to `final`
 - [X] Add type parameter
 - [X] Delete type parameter
 - [ ] Re-order type parameters
 - [X] Rename type parameter
 - [ ] Add, delete, or change type bounds of type parameter
-- [ ] Rename enum constant
-- [ ] Add, change, or delete enum constant arguments
-- [ ] Add, change, or delete enum constant class body
-- [ ] Add enum constant
-- [ ] Delete enum constant
-- [ ] Re-order enum constants
+- [ ] ~~Rename enum constant~~ _considered as add+delete_
+- [ ] ~~Add, change, or delete enum constant arguments~~
+- [ ] ~~Add, change, or delete enum constant class body~~
+- [X] Add enum constant
+- [X] Delete enum constant
+- [X] Re-order enum constants
 
 #### API classes - methods and constructors
 
-- [ ] Change body of method or constructor
+- [ ] ~~Change body of method or constructor~~
 - [ ] Change formal parameter name
-- [ ] Change method name
+- [ ] ~~Change method name~~ _considered as add+delete_
 - [ ] Add or delete formal parameter
 - [ ] Change type of a formal parameter
-- [ ] Change result type (including `void`)
+- [X] Change result type (including `void`)
 - [X] Add checked exceptions thrown
-- [ ] Add unchecked exceptions thrown
-- [ ] Delete checked exceptions thrown
-- [ ] Delete unchecked exceptions thrown
-- [ ] Re-order list of exceptions thrown
-- [ ] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
-- [ ] Increase access; that is, from `protected` access to `public` access
-- [ ] Change `abstract` to non-`abstract`
-- [ ] Change non-`abstract` to `abstract`
-- [ ] Change `final` to non-`final`
-- [ ] Change non-`final` to `final`
-- [ ] Change `static` to non-`static`
-- [ ] Change non-`static` to `static`
-- [ ] Change `native` to non-`native`
-- [ ] Change non-`native` to `native`
-- [ ] Change `synchronized` to non-`synchronized`
-- [ ] Change non-`synchronized` to `synchronized`
+- [ ] ~~Add unchecked exceptions thrown~~
+- [X] Delete checked exceptions thrown
+- [ ] ~~Delete unchecked exceptions thrown~~
+- [ ] ~~Re-order list of exceptions thrown~~
+- [X] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
+- [X] Increase access; that is, from `protected` access to `public` access
+- [X] Change `abstract` to non-`abstract`
+- [X] Change non-`abstract` to `abstract`
+- [X] Change `final` to non-`final`
+- [X] Change non-`final` to `final`
+- [X] Change `static` to non-`static`
+- [X] Change non-`static` to `static`
+- [ ] ~~Change `native` to non-`native`~~
+- [ ] ~~Change non-`native` to `native`~~
+- [ ] ~~Change `synchronized` to non-`synchronized`~~
+- [ ] ~~Change non-`synchronized` to `synchronized`~~
 - [X] Add type parameter
 - [X] Delete type parameter
 - [ ] Re-order type parameters
@@ -147,21 +147,21 @@ For the moment, only a few ones are implemented.
 
 #### API classes - fields
 
-- [ ] Change type of API field
+- [X] Change type of API field
 - [ ] Change value of API field
-- [ ] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
-- [ ] Increase access; that is, from `protected` access to `public` access
+- [X] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
+- [X] Increase access; that is, from `protected` access to `public` access
 - [ ] Change `final` to non-`final`
 - [ ] Change non-`final` to `final`
-- [ ] Change `static` to non-`static`
-- [ ] Change non-`static` to `static`
-- [ ] Change `transient` to non-`transient`
-- [ ] Change non-`transient` to `transient`
+- [X] Change `static` to non-`static`
+- [X] Change non-`static` to `static`
+- [ ] ~~Change `transient` to non-`transient`~~
+- [ ] ~~Change non-`transient` to `transient`~~
 
 #### API classes - type members
 
-- [ ] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
-- [ ] Increase access; that is, from `protected` access to `public` access
+- [X] Decrease access; that is, from `protected` access to `default` or `private` access; or from `public` access to `protected`, `default`, or `private` access
+- [X] Increase access; that is, from `protected` access to `public` access
 
 ### Non-API packages
 

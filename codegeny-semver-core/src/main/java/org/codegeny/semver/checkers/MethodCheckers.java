@@ -5,6 +5,7 @@ import static org.codegeny.semver.Change.MINOR;
 import static org.codegeny.semver.Change.PATCH;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Objects;
 
 import org.codegeny.semver.Change;
@@ -69,11 +70,40 @@ public enum MethodCheckers implements Checker<Method> {
 			return MAJOR.when(notNull(previous, current) && previous.getDeclaringClass().isAnnotation());
 		}
 	},
+	CHANGE_NON_ABSTRACT_TO_ABSTRACT {
+		
+		@Override
+		public Change check(Method previous, Method current) {
+			return MAJOR.when(notNull(previous, current) && !isAbstract(previous) && isAbstract(current));
+		}
+	},
+	CHANGE_ABSTRACT_TO_NON_ABSTRACT {
+		
+		@Override
+		public Change check(Method previous, Method current) {
+			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !isAbstract(current));
+		}
+	},
 	REMOVE_DEFAULT_CLAUSE {
 		
 		@Override
 		public Change check(Method previous, Method current) {
 			return MAJOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() == null);
+		}
+	},
+	CHANGE_NON_FINAL_TO_FINAL {
+		
+		@Override
+		public Change check(Method previous, Method current) {
+			// TODO implementable by client
+			return MAJOR.when(notNull(previous, current) && !isFinal(previous) && isFinal(current));
+		}
+	},
+	CHANGE_FINAL_TO_NON_FINAL {
+		
+		@Override
+		public Change check(Method previous, Method current) {
+			return MINOR.when(notNull(previous, current) && isFinal(previous) && !isFinal(current));
 		}
 	};
 	
@@ -83,5 +113,13 @@ public enum MethodCheckers implements Checker<Method> {
 	
 	boolean notNull(Object previous, Object current) {
 		return previous != null && current != null;
+	}
+	
+	boolean isAbstract(Method method) {
+		return Modifier.isAbstract(method.getModifiers());
+	}
+	
+	boolean isFinal(Method method) {
+		return Modifier.isFinal(method.getModifiers());
 	}
 }

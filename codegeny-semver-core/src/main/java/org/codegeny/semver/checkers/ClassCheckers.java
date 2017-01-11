@@ -5,6 +5,8 @@ import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
 import static org.codegeny.semver.checkers.Access.PUBLIC;
 
+import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.stream.Stream;
@@ -13,7 +15,21 @@ import org.codegeny.semver.Change;
 import org.codegeny.semver.Checker;
 
 public enum ClassCheckers implements Checker<Class<?>> {
-
+	
+	DECREASE_ACCESS {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current) {
+			return MAJOR.when(notNull(previous, current) && Access.of(current).isLesserThan(Access.of(previous)));
+		}
+	},
+	INCREASE_ACCESS {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current) {
+			return MINOR.when(notNull(previous, current) && Access.of(current).isGreaterThan(Access.of(previous)));
+		}
+	},
 	ENUM_ADD_CONSTANT {
 		
 		@Override
@@ -55,6 +71,35 @@ public enum ClassCheckers implements Checker<Class<?>> {
 		public Change check(Class<?> previous, Class<?> current) {
 			return MAJOR.when(notNull(previous, current) && Access.of(previous) == PUBLIC && Access.of(current) != PUBLIC);
 		}
+	},
+	TYPE_CHANGE_NON_ABSTRACT_TO_ABSTRACT {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current) {
+			return MAJOR.when(notNull(previous, current) && !isAbstract(previous) && isAbstract(current));
+		}
+	},
+	TYPE_CHANGE_ABSTRACT_TO_NON_ABSTRACT {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current) {
+			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !isAbstract(current));
+		}
+	},
+	TYPE_CHANGE_NON_FINAL_TO_FINAL {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current) {
+			// TODO implementable by client
+			return MAJOR.when(notNull(previous, current) && !isFinal(previous) && isFinal(current));
+		}
+	},
+	TYPE_CHANGE_FINAL_TO_NON_FINAL {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current) {
+			return MINOR.when(notNull(previous, current) && isFinal(previous) && !isFinal(current));
+		}
 	};
 	
 	boolean enumConstants(Class<?> previous, Class<?> current, BiPredicate<? super List<String>, ? super List<String>> predicate) {
@@ -67,5 +112,13 @@ public enum ClassCheckers implements Checker<Class<?>> {
 	
 	boolean notNull(Object previous, Object current) {
 		return previous != null && current != null;
+	}
+	
+	boolean isAbstract(Class<?> klass) {
+		return Modifier.isAbstract(klass.getModifiers());
+	}
+	
+	boolean isFinal(Class<?> klass) {
+		return Modifier.isFinal(klass.getModifiers());
 	}
 }
