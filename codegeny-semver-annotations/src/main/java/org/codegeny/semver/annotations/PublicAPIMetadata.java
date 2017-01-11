@@ -1,6 +1,7 @@
 package org.codegeny.semver.annotations;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 
 import org.codegeny.semver.Metadata;
@@ -43,20 +44,11 @@ public class PublicAPIMetadata implements Metadata {
 	}
 
 	@Override
-	public boolean isPublicAPI(Field field) {
-		PublicAPI publicAPI = field.getAnnotation(PublicAPI.class);
+	public boolean isPublicAPI(Member field) {
+		PublicAPI publicAPI = ((AnnotatedElement) field).getAnnotation(PublicAPI.class);
 		if (publicAPI != null) {
 			return !publicAPI.exclude();
 		}
 		return isPublicAPI(field.getDeclaringClass());
-	}
-
-	@Override
-	public boolean isPublicAPI(Method method) {
-		PublicAPI publicAPI = method.getAnnotation(PublicAPI.class);
-		if (publicAPI != null) {
-			return !publicAPI.exclude();
-		}
-		return isPublicAPI(method.getDeclaringClass());
 	}
 }

@@ -29,6 +29,6 @@ public class ChangeLastParameterFromVarargsToArrayTest extends AbstractChangeChe
 	}
 	
 	public ChangeLastParameterFromVarargsToArrayTest() {
-		super(new ChangeLastParameterFromVarargsToArrayChecker());
+		super(ExecutableCheckers.CHANGE_LAST_PARAMETER_FROM_VARARGS_TO_ARRAY);
 	}
 }

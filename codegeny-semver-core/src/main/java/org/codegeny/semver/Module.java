@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 public class Module {
 	
-	private static Pattern PATTERN = Pattern.compile("^([a-zA-Z$_][a-zA-Z0-9$_]*\\/)*[a-zA-Z$_][a-zA-Z0-9$_]*\\.class$");
+	private static final Pattern CLASS_PATTERN = Pattern.compile("^([a-zA-Z$_][a-zA-Z0-9$_]*\\/)*[a-zA-Z$_][a-zA-Z0-9$_]*\\.class$");
 	
 	private final Set<File> dependencies = new HashSet<>();
 	private final File main;
@@ -25,43 +25,30 @@ public class Module {
 		this.dependencies.addAll(Arrays.asList(dependencies));
 	}
 
-	private Stream<String> accept(File file) {
-		if (file.isFile()) {
-			return Stream.of(file).map(this::getRelativeFileName).filter(this::isClassFileName);
-		} else if (file.isDirectory()) {
-			return Stream.of(file.listFiles()).flatMap(this::accept);
-		} else {
-			throw new RuntimeException();
-		}
+	private Stream<File> accept(File file) {
+		return file.isFile() ? Stream.of(file) : Stream.of(file.listFiles()).flatMap(this::accept);
 	}
 
-	public Set<File> getArchives() {
+	public Set<String> getClassNames() {
+		return getResourceNames().stream()
+			.filter(f -> CLASS_PATTERN.matcher(f).matches())
+			.map(f -> f.substring(0, f.length() - ".class".length()).replace('/', '.'))
+			.collect(toSet());
+	}
+	
+	public Set<File> getClassPath() {
 		return Stream.concat(Stream.of(main), dependencies.stream()).collect(toSet());
 	}
 	
-	public Set<String> getClassNames() {
-		if (main.isFile()) { // jar
-			try (JarFile jarFile = new JarFile(main)) {
-				return jarFile.stream().map(JarEntry::getName).filter(this::isClassFileName).map(this::toClassName).collect(toSet());
+	public Set<String> getResourceNames() {
+		if (main.isFile()) {
+			try (JarFile jar = new JarFile(main)) {
+				return jar.stream().map(JarEntry::getName).collect(toSet());
 			} catch (IOException ioException) {
-				throw new UncheckedIOException(ioException);
+				throw new UncheckedIOException(String.format("Error while reading JAR file '%s'", main), ioException);
 			}
-		} else if (main.isDirectory()) {
-			return accept(main).map(this::toClassName).collect(toSet());
 		} else {
-			throw new RuntimeException();
+			return accept(main).map(f -> main.toPath().relativize(f.toPath()).toString()).collect(toSet());
 		}
-	}
-	
-	private String getRelativeFileName(File file) {
-		return file.getAbsolutePath().substring(main.getAbsolutePath().length());
-	}
-	
-	private boolean isClassFileName(String fileName) {
-		return PATTERN.matcher(fileName).matches();
-	}
-	
-	private String toClassName(String classFileName) {
-		return classFileName.substring(0, classFileName.length() - ".class".length()).replace('/', '.');
 	}
 }

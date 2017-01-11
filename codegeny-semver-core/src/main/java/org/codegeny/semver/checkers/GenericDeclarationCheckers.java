@@ -1,5 +1,9 @@
 package org.codegeny.semver.checkers;
 
+import static org.codegeny.semver.Change.MAJOR;
+import static org.codegeny.semver.Change.MINOR;
+import static org.codegeny.semver.Change.PATCH;
+
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.ParameterizedType;
@@ -11,29 +15,50 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
-import org.codegeny.semver.GenericDeclarationChangeChecker;
-import org.kohsuke.MetaInfServices;
+import org.codegeny.semver.Checker;
 
-@MetaInfServices
-public class RenameTypeParameterChecker implements GenericDeclarationChangeChecker {
+public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 	
-	@Override
-	public Change check(GenericDeclaration previous, GenericDeclaration current) {
-		if (previous == null || current == null) {
-			return Change.PATCH;
+	ADD_TYPE_PARAMETER {
+		
+		@Override
+		public Change check(GenericDeclaration previous, GenericDeclaration current) {
+			if (notNull(previous, current) && current.getTypeParameters().length > previous.getTypeParameters().length) {
+				return previous.getTypeParameters().length == 0 ? MINOR : MAJOR;
+			}
+			return PATCH;
 		}
-		Type[] previousTypeParameters = previous.getTypeParameters();
-		Type[] currentTypeParameters = current.getTypeParameters();
-		if (previousTypeParameters.length != currentTypeParameters.length) {
-			return Change.PATCH;
+	},
+	DELETE_TYPE_PARAMETER {
+		
+		@Override
+		public Change check(GenericDeclaration previous, GenericDeclaration current) {
+			return MAJOR.when(notNull(previous, current) && current.getTypeParameters().length < previous.getTypeParameters().length);
 		}
-		if (compareTypes(previousTypeParameters, currentTypeParameters)) {
-			return Change.PATCH;
+	},
+	RENAME_TYPE_PARAMETER {
+		
+		@Override
+		public Change check(GenericDeclaration previous, GenericDeclaration current) {
+			if (notNull(previous, current)) {
+				Type[] previousTypeParameters = previous.getTypeParameters();
+				Type[] currentTypeParameters = current.getTypeParameters();
+				if (previousTypeParameters.length == currentTypeParameters.length && !compareTypes(previousTypeParameters, currentTypeParameters)) {
+					return MAJOR;
+				}
+			}
+			return PATCH;
 		}
-		return Change.MAJOR;
+	};
+	
+	boolean compareGenericDeclaration(GenericDeclaration left, GenericDeclaration right) {
+		if (left instanceof Type && right instanceof Type) {
+			return compareType((Type) left, (Type) right);
+		}
+		return left.getClass().equals(right.getClass()); // methods and constructors
 	}
 	
-	private boolean compareType(Type leftType, Type rightType) {
+	boolean compareType(Type leftType, Type rightType) {
 		if (leftType instanceof Class<?> && rightType instanceof Class<?>) {
 			Class<?> leftClass = (Class<?>) leftType;
 			Class<?> rightClass = (Class<?>) rightType;
@@ -51,7 +76,8 @@ public class RenameTypeParameterChecker implements GenericDeclarationChangeCheck
 			TypeVariable<?> rightTypeVariable = (TypeVariable<?>) rightType;
 			return compareType(leftTypeVariable.getGenericDeclaration().getClass(), rightTypeVariable.getGenericDeclaration().getClass())
 				&& position(leftTypeVariable) == position(rightTypeVariable)
-				&& compareTypes(leftTypeVariable.getBounds(), rightTypeVariable.getBounds());
+				&& compareTypes(leftTypeVariable.getBounds(), rightTypeVariable.getBounds())
+				&& compareGenericDeclaration(leftTypeVariable.getGenericDeclaration(), rightTypeVariable.getGenericDeclaration());
 		}
 		if (leftType instanceof WildcardType && rightType instanceof WildcardType) {
 			WildcardType leftWildcardType = (WildcardType) leftType;
@@ -67,12 +93,16 @@ public class RenameTypeParameterChecker implements GenericDeclarationChangeCheck
 		return leftType == null && rightType == null;
 	}
 	
-	private boolean compareTypes(Type[] leftTypes, Type[] rightTypes) {
+	boolean compareTypes(Type[] leftTypes, Type[] rightTypes) {
 		return leftTypes.length == rightTypes.length
 			&& IntStream.range(0, leftTypes.length).allMatch(i -> compareType(leftTypes[i], rightTypes[i]));
 	}
 	
-	private int position(TypeVariable<?> typeVariable) {
+	boolean notNull(Object previous, Object current) {
+		return previous != null && current != null;
+	}
+	
+	int position(TypeVariable<?> typeVariable) {
 		return Stream.of(typeVariable.getGenericDeclaration().getTypeParameters()).map(TypeVariable::getName).collect(Collectors.toList()).indexOf(typeVariable.getName());
 	}
 }

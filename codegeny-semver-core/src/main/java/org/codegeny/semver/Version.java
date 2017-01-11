@@ -16,7 +16,7 @@ public final class Version implements Comparable<Version>, Serializable {
 	public static Version parseVersion(String version) {
 		Matcher matcher = PATTERN.matcher(version);
 		if (!matcher.matches()) {
-			throw new IllegalArgumentException("Version is not conform to major.minor.version pattern");
+			throw new IllegalArgumentException("Version is not conform to [major].[minor].[patch] pattern");
 		}
 		int major = Integer.parseInt(matcher.group("major"));
 		int minor = Integer.parseInt(matcher.group("minor"));
@@ -29,6 +29,9 @@ public final class Version implements Comparable<Version>, Serializable {
 	public Version(int major, int minor, int patch) {
 		if (major < 0 || minor < 0 || patch < 0) {
 			throw new IllegalArgumentException("Version must not contain any negative number");
+		}
+		if (major == 0 && minor == 0 && patch == 0) {
+			throw new IllegalArgumentException("Version must not be 0.0.0");
 		}
 		this.major = major;
 		this.minor = minor;

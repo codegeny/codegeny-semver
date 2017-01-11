@@ -28,6 +28,6 @@ public class AddEnumConstantCheckerTest extends AbstractChangeCheckerTest<Class<
 	}
 	
 	public AddEnumConstantCheckerTest() {
-		super(new AddEnumConstantChecker());
+		super(ClassCheckers.ENUM_ADD_CONSTANT);
 	}
 }

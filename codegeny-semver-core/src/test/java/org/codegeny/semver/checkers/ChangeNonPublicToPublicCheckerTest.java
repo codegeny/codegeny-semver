@@ -21,6 +21,6 @@ public class ChangeNonPublicToPublicCheckerTest extends AbstractChangeCheckerTes
 	}
 	
 	public ChangeNonPublicToPublicCheckerTest() {
-		super(new ChangeNonPublicToPublicChecker());
+		super(ClassCheckers.TYPE_CHANGE_NON_PUBLIC_TO_PUBLIC);
 	}
 }

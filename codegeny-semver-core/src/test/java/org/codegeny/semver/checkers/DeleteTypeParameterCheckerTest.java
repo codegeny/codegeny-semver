@@ -29,6 +29,6 @@ public class DeleteTypeParameterCheckerTest extends AbstractChangeCheckerTest<Ge
 	}
 	
 	public DeleteTypeParameterCheckerTest() {
-		super(new DeleteTypeParameterChecker());
+		super(GenericDeclarationCheckers.DELETE_TYPE_PARAMETER);
 	}
 }

@@ -9,10 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
-import org.codegeny.semver.ChangeChecker;
-import org.codegeny.semver.LoggerAware;
-import org.codegeny.semver.Metadata;
-import org.codegeny.semver.MetadataAware;
+import org.codegeny.semver.Checker;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -129,33 +126,17 @@ public abstract class AbstractChangeCheckerTest<T> {
 		return checks(Stream.of(dataSet).map(function).toArray(i -> new Data<?>[i]));
 	}
 	
-	private final ChangeChecker<T> checker;
+	private final Checker<T> checker;
 	
 	@Parameter
 	public Data<T> data;
 	
-	private final Metadata metadata;
-	
-	protected AbstractChangeCheckerTest(ChangeChecker<T> checker) {
-		this(checker, new Metadata.Default());
-	}
-	
-	protected AbstractChangeCheckerTest(ChangeChecker<T> checker, Metadata metadata) {
+	protected AbstractChangeCheckerTest(Checker<T> checker) {
 		this.checker = checker;
-		this.metadata = metadata;
-		if (checker instanceof MetadataAware) {
-			((MetadataAware) checker).setMetadata(metadata);		
-		}
-		if (checker instanceof LoggerAware) {
-			((LoggerAware) checker).setLogger((f, a) -> System.out.printf(f, a).println());
-		}
 	}
 	
 	@Test
 	public void test() {
-//		if (data.getPrevious() != null && !metadata.isPublicAPI(data.getPrevious()) && data.getCurrent() != null && !metadata.isPublicAPI(data.getCurrent())) {
-//			Assert.assertEquals(data.getExpectedChange(), Change.PATCH)
-//		}
 		Assert.assertEquals(data.getExpectedChange(), checker.check(data.getPrevious(), data.getCurrent()));
 	}
 }

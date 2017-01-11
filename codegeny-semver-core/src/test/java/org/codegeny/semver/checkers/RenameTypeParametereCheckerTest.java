@@ -4,7 +4,6 @@ import java.lang.reflect.GenericDeclaration;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-import org.codegeny.semver.Metadata;
 import org.junit.runners.Parameterized.Parameters;
 
 public class RenameTypeParametereCheckerTest extends AbstractChangeCheckerTest<GenericDeclaration> {
@@ -16,13 +15,13 @@ public class RenameTypeParametereCheckerTest extends AbstractChangeCheckerTest<G
 	@Parameters(name = NAME)
 	public static Collection<?> parameters() {
 		return classes(
-			patch(Test1.class, Test2.class), //
+			major(Test1.class, Test2.class), //
 			major(Test2.class, Test3.class), //
 			major(Test3.class, Test1.class)  //
 		);
 	}
 
 	public RenameTypeParametereCheckerTest() {
-		super(new RenameTypeParameterChecker(), new Metadata() {});
+		super(GenericDeclarationCheckers.RENAME_TYPE_PARAMETER);
 	}
 }

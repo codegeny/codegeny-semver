@@ -16,7 +16,7 @@
 		<module>codegeny-semver-core</module>
 		<module>codegeny-semver-annotations</module>
 		<module>codegeny-semver-maven-plugin</module>
-		<module>codegeny-semver-example</module>
+<!-- 		<module>codegeny-semver-example</module> -->
 	</modules>
 
 </project>

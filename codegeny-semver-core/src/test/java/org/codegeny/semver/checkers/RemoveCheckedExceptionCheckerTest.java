@@ -55,6 +55,6 @@ public class RemoveCheckedExceptionCheckerTest extends AbstractChangeCheckerTest
 	}
 	
 	public RemoveCheckedExceptionCheckerTest() {
-		super(new RemoveCheckedExceptionChecker());
+		super(ExecutableCheckers.REMOVE_CHECKED_EXCEPTION);
 	}
 }

@@ -37,6 +37,6 @@ public class DeleteMethodCheckerTest extends AbstractChangeCheckerTest<Method> {
 	}
 	
 	public DeleteMethodCheckerTest() {
-		super(new DeleteMethorChecker());
+		super(MethodCheckers.DELETE_METHOD);
 	}
 }

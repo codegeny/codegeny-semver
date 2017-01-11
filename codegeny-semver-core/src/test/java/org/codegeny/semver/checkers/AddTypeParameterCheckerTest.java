@@ -29,6 +29,6 @@ public class AddTypeParameterCheckerTest extends AbstractChangeCheckerTest<Gener
 	}
 	
 	public AddTypeParameterCheckerTest() {
-		super(new AddTypeParameterChecker());
+		super(GenericDeclarationCheckers.ADD_TYPE_PARAMETER);
 	}
 }

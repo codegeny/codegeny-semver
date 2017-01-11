@@ -37,6 +37,6 @@ public class ChangeKindCheckerTest extends AbstractChangeCheckerTest<Class<?>> {
 	}
 	
 	public ChangeKindCheckerTest() {
-		super(new ChangeKindChecker());
+		super(ClassCheckers.TYPE_CHANGE_KIND);
 	}
 }

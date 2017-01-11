@@ -15,9 +15,9 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.repository.RepositorySystem;
 import org.codegeny.semver.Change;
-import org.codegeny.semver.ChangeChecker;
+import org.codegeny.semver.Checker;
 import org.codegeny.semver.Module;
-import org.codegeny.semver.ModuleChangeChecker;
+import org.codegeny.semver.ModuleChecker;
 import org.codegeny.semver.Version;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
@@ -93,7 +93,7 @@ public class SemanticVersionMojo extends AbstractMojo {
 
 		try {
 			
-			ChangeChecker<Module> moduleChangeChecker = ModuleChangeChecker.newConfiguredInstance((f, a) -> getLog().info(String.format(f,  a)));
+			Checker<Module> moduleChangeChecker = ModuleChecker.newConfiguredInstance((f, a) -> getLog().info(String.format(f,  a)));
 			
 			Module currentModule = new Module(new File(mavenProject.getBuild().getOutputDirectory()));
 			Module previousModule = new Module(previousArtifactFile);

@@ -55,6 +55,6 @@ public class AddCheckedExceptionCheckerTest extends AbstractChangeCheckerTest<Ex
 	}
 	
 	public AddCheckedExceptionCheckerTest() {
-		super(new AddCheckedExceptionChecker());
+		super(ExecutableCheckers.ADD_CHECKED_EXCEPTION);
 	}
 }
