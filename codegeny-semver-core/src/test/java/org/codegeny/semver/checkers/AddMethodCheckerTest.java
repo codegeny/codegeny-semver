@@ -45,6 +45,6 @@ public class AddMethodCheckerTest extends AbstractChangeCheckerTest<Method> {
 	}
 	
 	public AddMethodCheckerTest() {
-		super(MethodCheckers.ADD_METHOD);
+		super(MethodCheckers.ADD_DEFAULT_METHOD_IMPLEMENTABLE_BY_CLIENT);
 	}
 }
