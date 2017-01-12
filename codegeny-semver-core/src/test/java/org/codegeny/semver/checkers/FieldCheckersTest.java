@@ -19,7 +19,7 @@ public class FieldCheckersTest extends AbstractCheckersTest<Field, FieldCheckers
 		long age;
 	}
 	
-	@Parameters
+	@Parameters(name = "{0}")
 	public static Collection<?> parameters() {
 		return fields(
 			data(null, null),

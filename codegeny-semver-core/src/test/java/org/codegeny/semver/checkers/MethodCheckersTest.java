@@ -49,7 +49,7 @@ public class MethodCheckersTest extends AbstractCheckersTest<Method, MethodCheck
 		Class<?> attr() default Long.class;
 	}
 
-	@Parameters
+	@Parameters(name = "{0}")
 	public static Collection<?> parameters() {
 		return methods(
 				

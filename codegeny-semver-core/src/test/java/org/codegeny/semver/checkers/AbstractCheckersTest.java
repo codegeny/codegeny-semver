@@ -40,8 +40,8 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 		
 		public Data<Method> toMethod() {
 			return new Data<>(
-				getPrevious() != null && getPrevious().getDeclaredMethods().length > 0 ? getPrevious().getDeclaredMethods()[0] : null,
-				getCurrent() != null && getCurrent().getDeclaredMethods().length > 0 ? getCurrent().getDeclaredMethods()[0] : null,
+				getPrevious() == null ? null : Stream.of(getPrevious().getDeclaredMethods()).filter(m -> !m.getName().startsWith("$")).findFirst().orElse(null),
+				getCurrent() == null ? null : Stream.of(getCurrent().getDeclaredMethods()).filter(m -> !m.getName().startsWith("$")).findFirst().orElse(null),
 				getChecks()
 			);
 		}
@@ -72,6 +72,11 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 
 		public T getPrevious() {
 			return previous;
+		}
+		
+		@Override
+		public String toString() {
+			return String.format("%s :: %s - %s", checks, previous, current);
 		}
 	}
 	

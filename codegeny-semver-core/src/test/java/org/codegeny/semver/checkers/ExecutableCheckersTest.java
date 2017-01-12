@@ -33,7 +33,7 @@ public class ExecutableCheckersTest extends AbstractCheckersTest<Executable, Exe
 		int method(int[] things);
 	}
 
-	@Parameters
+	@Parameters(name = "{0}")
 	public static Collection<?> parameters() {
 		return methods(
 			data(null, null),
