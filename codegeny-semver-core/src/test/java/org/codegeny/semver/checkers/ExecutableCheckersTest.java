@@ -25,10 +25,15 @@ public class ExecutableCheckersTest extends AbstractCheckersTest<Executable, Exe
 	
 	interface TestType3 {
 		
-		int method(int... things);
+		int method() throws RuntimeException;
 	}
 	
 	interface TestType4 {
+		
+		int method(int... things);
+	}
+	
+	interface TestType5 {
 		
 		int method(int[] things);
 	}
@@ -41,9 +46,11 @@ public class ExecutableCheckersTest extends AbstractCheckersTest<Executable, Exe
 			data(TestType1.class, null),
 			data(TestType1.class, TestType1.class),
 			data(TestType1.class, TestType2.class, ADD_CHECKED_EXCEPTION),
+			data(TestType1.class, TestType3.class),
 			data(TestType2.class, TestType1.class, REMOVE_CHECKED_EXCEPTION),
-			data(TestType3.class, TestType4.class, CHANGE_LAST_PARAMETER_FROM_VARARGS_TO_ARRAY),
-			data(TestType4.class, TestType3.class, CHANGE_LAST_PARAMETER_FROM_ARRAY_TO_VARARGS)
+			data(TestType3.class, TestType1.class),
+			data(TestType4.class, TestType5.class, CHANGE_LAST_PARAMETER_FROM_VARARGS_TO_ARRAY),
+			data(TestType5.class, TestType4.class, CHANGE_LAST_PARAMETER_FROM_ARRAY_TO_VARARGS)
 		);
 	}
 	

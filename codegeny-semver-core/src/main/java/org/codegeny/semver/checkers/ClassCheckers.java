@@ -16,20 +16,6 @@ import org.codegeny.semver.Metadata;
 
 public enum ClassCheckers implements Checker<Class<?>> {
 	
-	DECREASE_ACCESS {
-		
-		@Override
-		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && Access.of(current).isLesserThan(Access.of(previous)));
-		}
-	},
-	INCREASE_ACCESS {
-		
-		@Override
-		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && Access.of(current).isGreaterThan(Access.of(previous)));
-		}
-	},
 	ENUM_ADD_CONSTANT {
 		
 		@Override
@@ -62,28 +48,28 @@ public enum ClassCheckers implements Checker<Class<?>> {
 		
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && Access.of(previous) != PUBLIC && Access.of(current) == PUBLIC);
+			return MINOR.when(sameKind(previous, current) && Access.of(previous) != PUBLIC && Access.of(current) == PUBLIC);
 		}
 	},
 	TYPE_CHANGE_PUBLIC_TO_NON_PUBLIC {
 		
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && Access.of(previous) == PUBLIC && Access.of(current) != PUBLIC);
+			return MAJOR.when(sameKind(previous, current) && Access.of(previous) == PUBLIC && Access.of(current) != PUBLIC);
 		}
 	},
 	TYPE_CHANGE_NON_ABSTRACT_TO_ABSTRACT {
 		
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && !isAbstract(previous) && isAbstract(current));
+			return MAJOR.when(sameKind(previous, current) && !isAbstract(previous) && isAbstract(current));
 		}
 	},
 	TYPE_CHANGE_ABSTRACT_TO_NON_ABSTRACT {
 		
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !isAbstract(current));
+			return MINOR.when(sameKind(previous, current) && isAbstract(previous) && !isAbstract(current));
 		}
 	},
 	TYPE_CHANGE_NON_FINAL_TO_FINAL {
@@ -91,14 +77,14 @@ public enum ClassCheckers implements Checker<Class<?>> {
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
 			// TODO implementable by client
-			return MAJOR.when(notNull(previous, current) && !isFinal(previous) && isFinal(current));
+			return MAJOR.when(sameKind(previous, current) && !isFinal(previous) && isFinal(current));
 		}
 	},
 	TYPE_CHANGE_FINAL_TO_NON_FINAL {
 		
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && isFinal(previous) && !isFinal(current));
+			return MINOR.when(sameKind(previous, current) && isFinal(previous) && !isFinal(current));
 		}
 	};
 	
@@ -108,6 +94,10 @@ public enum ClassCheckers implements Checker<Class<?>> {
 	
 	List<String> enumConstantsOf(Class<?> klass) {
 		return Stream.of(klass.asSubclass(Enum.class).getEnumConstants()).map(Enum::name).collect(toList());
+	}
+	
+	boolean sameKind(Class<?> previous, Class<?> current) {
+		return notNull(previous, current) && Kind.of(previous) == Kind.of(current);
 	}
 	
 	boolean notNull(Object previous, Object current) {
