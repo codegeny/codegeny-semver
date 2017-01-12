@@ -5,7 +5,8 @@ import static org.codegeny.semver.Change.MINOR;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.Checker;
@@ -74,7 +75,7 @@ public enum MethodCheckers implements Checker<Method> {
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
 			// TODO Objects.equals() is not sufficient (what about Class attributes?)
-			return MINOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() != null && !Objects.equals(previous.getDefaultValue(), current.getDefaultValue()));
+			return MINOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() != null && !compareDefaultValue(previous.getDefaultValue(), current.getDefaultValue()));
 		}
 	},
 	CHANGE_RESULT_TYPE {
@@ -120,6 +121,45 @@ public enum MethodCheckers implements Checker<Method> {
 			return MINOR.when(notNull(previous, current) && isFinal(previous) && !isFinal(current));
 		}
 	};
+	
+	boolean compareDefaultValue(Object previous, Object current)  {
+		if (!previous.getClass().equals(current.getClass())) {
+			return true;
+		}
+		if (previous.getClass().isArray()) {
+			
+			if (previous.getClass().getComponentType().isEnum()) {
+				return Arrays.deepEquals(
+					Stream.of((Enum<?>[]) previous).map(Enum::name).toArray(i -> new String[i]),
+					Stream.of((Enum<?>[]) current).map(Enum::name).toArray(i -> new String[i])
+				);
+			}
+			if (previous.getClass().getComponentType().isAnnotation()) {
+				// TODO
+				return false;
+			}
+			if (previous.getClass().getComponentType().equals(Class.class)) {
+				return Arrays.deepEquals(
+					Stream.of((Class<?>[]) previous).map(Class::getName).toArray(i -> new String[i]),
+					Stream.of((Class<?>[]) current).map(Class::getName).toArray(i -> new String[i])
+				);
+			}
+			
+		} else {
+			if (previous.getClass().isEnum()) {
+				return ((Enum<?>) previous).name().equals(((Enum<?>) current).name());
+			}
+			if (previous.getClass().isAnnotation()) {
+				// TODO
+				return false;
+			}
+			if (previous.getClass().equals(Class.class)) {
+				return ((Class<?>) previous).getName().equals(((Class<?>) current).getName());
+			}
+		}
+		
+		return previous.equals(current);
+	}
 	
 	boolean fromAnnotations(Method previous, Method current) {
 		return notNull(previous, current) && previous.getDeclaringClass().isAnnotation() && current.getDeclaringClass().isAnnotation();
