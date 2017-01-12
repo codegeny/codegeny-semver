@@ -137,6 +137,6 @@ public abstract class AbstractChangeCheckerTest<T> {
 	
 	@Test
 	public void test() {
-		Assert.assertEquals(data.getExpectedChange(), checker.check(data.getPrevious(), data.getCurrent()));
+		Assert.assertEquals(data.getExpectedChange(), checker.check(data.getPrevious(), data.getCurrent(), null));
 	}
 }

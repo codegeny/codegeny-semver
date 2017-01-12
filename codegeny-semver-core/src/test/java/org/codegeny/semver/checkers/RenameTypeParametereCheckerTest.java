@@ -22,6 +22,6 @@ public class RenameTypeParametereCheckerTest extends AbstractChangeCheckerTest<G
 	}
 
 	public RenameTypeParametereCheckerTest() {
-		super(GenericDeclarationCheckers.RENAME_TYPE_PARAMETER);
+		super(GenericDeclarationCheckers.CHANGE_TYPE_PARAMETERS_BOUNDS);
 	}
 }

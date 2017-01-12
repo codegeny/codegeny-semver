@@ -1,8 +1,8 @@
 package org.codegeny.semver.checkers;
 
+import static java.util.stream.Collectors.toList;
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
-import static org.codegeny.semver.Change.PATCH;
 
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.GenericDeclaration;
@@ -10,44 +10,41 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.Checker;
+import org.codegeny.semver.Metadata;
 
 public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 	
-	ADD_TYPE_PARAMETER {
+	ADD_TYPE_PARAMETER_WHEN_NO_PARAMETERS_EXIST {
 		
 		@Override
-		public Change check(GenericDeclaration previous, GenericDeclaration current) {
-			if (notNull(previous, current) && current.getTypeParameters().length > previous.getTypeParameters().length) {
-				return previous.getTypeParameters().length == 0 ? MINOR : MAJOR;
-			}
-			return PATCH;
+		public Change check(GenericDeclaration previous, GenericDeclaration current, Metadata metadata) {
+			return MINOR.when(notNull(previous, current) && current.getTypeParameters().length > previous.getTypeParameters().length && previous.getTypeParameters().length == 0);
+		}
+	},
+	ADD_TYPE_PARAMETER_WHEN_OTHER_PARAMETERS_EXIST {
+		
+		@Override
+		public Change check(GenericDeclaration previous, GenericDeclaration current, Metadata metadata) {
+			return MINOR.when(notNull(previous, current) && current.getTypeParameters().length > previous.getTypeParameters().length && previous.getTypeParameters().length > 0);
 		}
 	},
 	DELETE_TYPE_PARAMETER {
 		
 		@Override
-		public Change check(GenericDeclaration previous, GenericDeclaration current) {
+		public Change check(GenericDeclaration previous, GenericDeclaration current, Metadata metadata) {
 			return MAJOR.when(notNull(previous, current) && current.getTypeParameters().length < previous.getTypeParameters().length);
 		}
 	},
-	RENAME_TYPE_PARAMETER {
+	CHANGE_TYPE_PARAMETERS_BOUNDS {
 		
 		@Override
-		public Change check(GenericDeclaration previous, GenericDeclaration current) {
-			if (notNull(previous, current)) {
-				Type[] previousTypeParameters = previous.getTypeParameters();
-				Type[] currentTypeParameters = current.getTypeParameters();
-				if (previousTypeParameters.length == currentTypeParameters.length && !compareTypes(previousTypeParameters, currentTypeParameters)) {
-					return MAJOR;
-				}
-			}
-			return PATCH;
+		public Change check(GenericDeclaration previous, GenericDeclaration current, Metadata metadata) {
+			return MAJOR.when(notNull(previous, current) && current.getTypeParameters().length == previous.getTypeParameters().length && !compareTypes(previous.getTypeParameters(), current.getTypeParameters()));
 		}
 	};
 	
@@ -94,8 +91,7 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 	}
 	
 	boolean compareTypes(Type[] leftTypes, Type[] rightTypes) {
-		return leftTypes.length == rightTypes.length
-			&& IntStream.range(0, leftTypes.length).allMatch(i -> compareType(leftTypes[i], rightTypes[i]));
+		return leftTypes.length == rightTypes.length && IntStream.range(0, leftTypes.length).allMatch(i -> compareType(leftTypes[i], rightTypes[i]));
 	}
 	
 	boolean notNull(Object previous, Object current) {
@@ -103,6 +99,6 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 	}
 	
 	int position(TypeVariable<?> typeVariable) {
-		return Stream.of(typeVariable.getGenericDeclaration().getTypeParameters()).map(TypeVariable::getName).collect(Collectors.toList()).indexOf(typeVariable.getName());
+		return Stream.of(typeVariable.getGenericDeclaration().getTypeParameters()).map(TypeVariable::getName).collect(toList()).indexOf(typeVariable.getName());
 	}
 }

@@ -25,7 +25,7 @@ For the moment, only a few ones are implemented.
 
 - [ ] Add `abstract` method
 - [ ] Add `default` method
-- [ ] Add `static` method
+- [X] Add `static` method
 - [ ] Delete API method 
 - [ ] Move API method up type hierarchy
 - [ ] Move API method down type hierarchy
@@ -36,7 +36,7 @@ For the moment, only a few ones are implemented.
 - [ ] Add, delete, or change `static` initializers
 - [ ] Add API type member
 - [ ] Delete API type member
-- [ ] Re-order field, method, and type member declarations
+- [ ] ~~Re-order field, method, and type member declarations~~
 - [X] Add type parameter
 - [X] Delete type parameter
 - [ ] Re-order type parameters
@@ -94,7 +94,7 @@ For the moment, only a few ones are implemented.
 - [ ] ~~Add, delete, or change `static` or instance initializers~~
 - [ ] Add API type member
 - [ ] Delete API type member
-- [ ] Re-order field, method, constructor, and type member declarations
+- [ ] ~~Re-order field, method, constructor, and type member declarations~~
 - [ ] Add or delete non-API members; that is, `private` or `default` access fields, methods, constructors, and type members
 - [X] Change `abstract` to non-`abstract`
 - [X] Change non-`abstract` to `abstract`

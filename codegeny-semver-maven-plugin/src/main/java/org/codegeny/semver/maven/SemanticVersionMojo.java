@@ -1,6 +1,9 @@
 package org.codegeny.semver.maven;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -15,9 +18,9 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.repository.RepositorySystem;
 import org.codegeny.semver.Change;
-import org.codegeny.semver.Checker;
 import org.codegeny.semver.Module;
 import org.codegeny.semver.ModuleChecker;
+import org.codegeny.semver.Reporter;
 import org.codegeny.semver.Version;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
@@ -93,12 +96,33 @@ public class SemanticVersionMojo extends AbstractMojo {
 
 		try {
 			
-			Checker<Module> moduleChangeChecker = ModuleChecker.newConfiguredInstance((f, a) -> getLog().info(String.format(f,  a)));
+			ModuleChecker moduleChangeChecker = ModuleChecker.newConfiguredInstance();
 			
 			Module currentModule = new Module(new File(mavenProject.getBuild().getOutputDirectory()));
 			Module previousModule = new Module(previousArtifactFile);
 			
-			Change change = moduleChangeChecker.check(previousModule, currentModule);
+			Change change = moduleChangeChecker.check(previousModule, currentModule, new Reporter() {
+				
+				@Override
+				public void report(Change change, String name, Method previous, Method current) {
+					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
+				}
+				
+				@Override
+				public void report(Change change, String name, Field previous, Field current) {
+					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
+				}
+				
+				@Override
+				public void report(Change change, String name, Constructor<?> previous, Constructor<?> current) {
+					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
+				}
+				
+				@Override
+				public void report(Change change, String name, Class<?> previous, Class<?> current) {
+					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
+				}
+			});
 			
 			Version releaseVersion = change.nextVersion(currentVersion);
 			Version snapshotVersion = releaseVersion.nextPatchVersion();

@@ -36,7 +36,7 @@ import org.codegeny.semver.checkers.GenericDeclarationCheckers;
 import org.codegeny.semver.checkers.MemberCheckers;
 import org.codegeny.semver.checkers.MethodCheckers;
 
-public class ModuleChecker implements Checker<Module> {
+public class ModuleChecker {
 	
 	private static class Default implements Metadata {
 		
@@ -56,14 +56,19 @@ public class ModuleChecker implements Checker<Module> {
 			return isPublicAPI(member.getDeclaringClass()) && !Modifier.isPrivate(member.getModifiers());
 		}	
 	}
+	
+	interface Report<T> {
 		
-	public static ModuleChecker newConfiguredInstance(Logger logger) {
+		void report(Change change, String name, T previous, T current);
+	}
+			
+	public static ModuleChecker newConfiguredInstance() {
 		
 		Set<Metadata> metaSet = new HashSet<>();
 		ServiceLoader.load(Metadata.class).forEach(metaSet::add);
 		Metadata metadata = metaSet.stream().reduce(Metadata::or).orElseGet(Default::new);
 		
-		ModuleChecker moduleChangeChecker = new ModuleChecker(logger, metadata);
+		ModuleChecker moduleChangeChecker = new ModuleChecker(metadata);
 		
 		register(ClassCheckers.class, moduleChangeChecker::registerClassChecker);
 		register(ConstructorCheckers.class, moduleChangeChecker::registerConstructorChecker);
@@ -83,17 +88,14 @@ public class ModuleChecker implements Checker<Module> {
 	private final Map<String, Checker<? super Class<?>>> classCheckers = new TreeMap<>();
 	private final Map<String, Checker<? super Constructor<?>>> constructorCheckers = new TreeMap<>();
 	private final Map<String, Checker<? super Field>> fieldCheckers = new TreeMap<>();
-	private final Logger logger;
-	private final Metadata metadata;
 	private final Map<String, Checker<? super Method>> methodCheckers = new TreeMap<>();
+	private final Metadata metadata;
 
-	public ModuleChecker(Logger logger, Metadata metadata) {
-		this.logger = logger;
+	public ModuleChecker(Metadata metadata) {
 		this.metadata = metadata;
 	}
 
-	@Override
-	public Change check(Module previous, Module current) {
+	public Change check(Module previous, Module current, Reporter reporter) {
 		
 		Set<URL> previousArchives = toURLs(previous.getClassPath());
 		Set<URL> currentArchives = toURLs(current.getClassPath());
@@ -130,10 +132,10 @@ public class ModuleChecker implements Checker<Module> {
 				}
 				
 				List<Supplier<Change>> checkers = new LinkedList<>();
-				checkers.add(() -> check(previousClass, currentClass, classCheckers, metadata::isPublicAPI));
-				checkers.add(() -> check(previousClass.getDeclaredFields(), currentClass.getDeclaredFields(), fieldCheckers, metadata::isPublicAPI, Field::getName));
-				checkers.add(() -> check(previousClass.getDeclaredMethods(), currentClass.getDeclaredMethods(), methodCheckers, metadata::isPublicAPI, this::key));
-				checkers.add(() -> check(previousClass.getDeclaredConstructors(), currentClass.getDeclaredConstructors(), constructorCheckers, metadata::isPublicAPI, this::key));
+				checkers.add(() -> check(previousClass, currentClass, classCheckers, metadata::isPublicAPI, reporter::report));
+				checkers.add(() -> check(previousClass.getDeclaredFields(), currentClass.getDeclaredFields(), fieldCheckers, metadata::isPublicAPI, reporter::report, Field::getName));
+				checkers.add(() -> check(previousClass.getDeclaredMethods(), currentClass.getDeclaredMethods(), methodCheckers, metadata::isPublicAPI, reporter::report, this::key));
+				checkers.add(() -> check(previousClass.getDeclaredConstructors(), currentClass.getDeclaredConstructors(), constructorCheckers, metadata::isPublicAPI, reporter::report, this::key));
 				
 				Change classResult = combine(checkers);
 				
@@ -151,25 +153,23 @@ public class ModuleChecker implements Checker<Module> {
 		}
 	}
 	
-	private <T> Change check(T previous, T current, Map<String, Checker<? super T>> checkers, Predicate<? super T> isPublicAPI) {
+	private <T> Change check(T previous, T current, Map<String, Checker<? super T>> checkers, Predicate<? super T> isPublicAPI, Report<T> report) {
 		Change result = Change.PATCH;
 		if (previous != null && !isPublicAPI.test(previous) && current != null && !isPublicAPI.test(current)) {
 			return result;
 		}
-		logger.log("+ %s", previous != null ? previous : current);
 		for (Map.Entry<String, Checker<? super T>> checker : checkers.entrySet()) {
-			Change change = checker.getValue().check(previous, current);
-			logger.log("  - %s : %s", change, checker.getKey());
+			Change change = checker.getValue().check(previous, current, metadata); // TODO
+			report.report(change, checker.getKey(), previous, current);
 			result = result.combine(change);
-			if (result == Change.MAJOR) {
-				break;
-			}
+//			if (result == Change.MAJOR) {
+//				break;
+//			}
 		}
-		logger.log("= %s", result);
 		return result;
 	}
 	
-	private <T> Change check(T[] previouses, T[] currents, Map<String, Checker<? super T>> checkers, Predicate<? super T> isPublicAPI, Function<? super T, ?> keyer) {
+	private <T> Change check(T[] previouses, T[] currents, Map<String, Checker<? super T>> checkers, Predicate<? super T> isPublicAPI, Report<T> report, Function<? super T, ?> keyer) {
 		Map<Object, T> previousMap = Stream.of(previouses).collect(toMap(keyer, m -> m));
 		Map<Object, T> currentMap = Stream.of(currents).collect(toMap(keyer, m -> m));
 		Set<Object> keys = new HashSet<>();
@@ -182,10 +182,10 @@ public class ModuleChecker implements Checker<Module> {
 			if (previous == current) {
 				continue;
 			}
-			result = result.combine(check(previous, current, checkers, isPublicAPI));
-			if (result == Change.MAJOR) {
-				break;
-			}
+			result = result.combine(check(previous, current, checkers, isPublicAPI, report));
+//			if (result == Change.MAJOR) {
+//				break;
+//			}
 		}
 		return result;
 	}
@@ -194,9 +194,9 @@ public class ModuleChecker implements Checker<Module> {
 		Change result = Change.PATCH;
 		for (Supplier<Change> checker : checkers) {
 			result = result.combine(checker.get());
-			if (result == Change.MAJOR) {
-				break;
-			}
+//			if (result == Change.MAJOR) {
+//				break;
+//			}
 		}
 		return result;
 	}
