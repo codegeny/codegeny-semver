@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.codegeny.semver.Change.PATCH;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -28,6 +29,14 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 
 		public ClassData(Class<?> previous, Class<?> current, Object... checks) {
 			super(previous, current, checks);
+		}
+		
+		public Data<Constructor<?>> toConstructor() {
+			return new Data<>(
+				getPrevious() != null && getPrevious().getDeclaredConstructors().length > 0 ? getPrevious().getDeclaredConstructors()[0] : null,
+				getCurrent() != null && getCurrent().getDeclaredConstructors().length > 0 ? getCurrent().getDeclaredConstructors()[0] : null,
+				getChecks()
+			);
 		}
 		
 		public Data<Field> toField() {
@@ -84,6 +93,10 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 		return Arrays.asList(data);
 	}
 	
+	protected static Collection<?> constructors(ClassData... data) {
+		return Stream.of(data).map(ClassData::toConstructor).collect(toList());
+	}
+	
 	protected static ClassData data(Class<?> previous, Class<?> current, Object... checks) {
 		return new ClassData(previous, current, checks);
 	}
@@ -97,18 +110,18 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 	}
 	
 	private final Class<C> checkerClass;
-	private final Metadata metadata;
-	
 	@Parameter
 	public Data<T> data;
+	
+	private final Metadata metadata;
+	
+	protected AbstractCheckersTest(Class<C> checkerClass) {
+		this(checkerClass, new DefaultMetadata());
+	}
 	
 	protected AbstractCheckersTest(Class<C> checkerClass, Metadata metadata) {
 		this.checkerClass = checkerClass;
 		this.metadata = metadata;
-	}
-	
-	protected AbstractCheckersTest(Class<C> checkerClass) {
-		this(checkerClass, new DefaultMetadata());
 	}
 
 	@Test
