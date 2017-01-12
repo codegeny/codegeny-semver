@@ -12,7 +12,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashSet;
@@ -38,25 +37,6 @@ import org.codegeny.semver.checkers.MethodCheckers;
 
 public class ModuleChecker {
 	
-	private static class Default implements Metadata {
-		
-		public boolean isImplementedByClient(Class<?> klass) {
-			return !Modifier.isFinal(klass.getModifiers());
-		}
-		
-		public boolean isImplementedByClient(Method method) {
-			return isImplementedByClient(method.getDeclaringClass()) && !Modifier.isFinal(method.getModifiers());
-		}
-		
-		public boolean isPublicAPI(Class<?> klass) {
-			return Modifier.isPublic(klass.getModifiers());
-		}
-		
-		public boolean isPublicAPI(Member member) {
-			return isPublicAPI(member.getDeclaringClass()) && !Modifier.isPrivate(member.getModifiers());
-		}	
-	}
-	
 	interface Report<T> {
 		
 		void report(Change change, String name, T previous, T current);
@@ -66,7 +46,7 @@ public class ModuleChecker {
 		
 		Set<Metadata> metaSet = new HashSet<>();
 		ServiceLoader.load(Metadata.class).forEach(metaSet::add);
-		Metadata metadata = metaSet.stream().reduce(Metadata::or).orElseGet(Default::new);
+		Metadata metadata = metaSet.stream().reduce(Metadata::or).orElseGet(DefaultMetadata::new);
 		
 		ModuleChecker moduleChangeChecker = new ModuleChecker(metadata);
 		

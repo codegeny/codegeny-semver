@@ -24,14 +24,14 @@ public enum MethodCheckers implements Checker<Method> {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && previous.getDeclaringClass().isAnnotation() && current.getDefaultValue() != null);
+			return MINOR.when(previous == null && current != null && current.getDeclaringClass().isAnnotation() && current.getDefaultValue() != null);
 		}
 	},
 	ADD_ANNOTATION_ELEMENT_WITHOUT_DEFAULT_VALUE {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && previous.getDeclaringClass().isAnnotation() && current.getDefaultValue() == null);
+			return MAJOR.when(previous == null && current != null && current.getDeclaringClass().isAnnotation() && current.getDefaultValue() == null);
 		}
 	},
 	ADD_DEFAULT_CLAUSE {
@@ -84,20 +84,6 @@ public enum MethodCheckers implements Checker<Method> {
 			return MAJOR.when(notNull(previous, current) && !previous.getReturnType().getName().equals(current.getReturnType().getName()));
 		}
 	},
-	DELETE_METHOD {
-		
-		@Override
-		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(previous != null && current == null);
-		}
-	},
-	REMOVE_ANNOTATION_ELEMENT {
-		
-		@Override
-		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && previous.getDeclaringClass().isAnnotation());
-		}
-	},
 	CHANGE_NON_ABSTRACT_TO_ABSTRACT {
 		
 		@Override
@@ -109,7 +95,7 @@ public enum MethodCheckers implements Checker<Method> {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !isAbstract(current));
+			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !isAbstract(current) && !isStatic(current));
 		}
 	},
 	REMOVE_DEFAULT_CLAUSE {
