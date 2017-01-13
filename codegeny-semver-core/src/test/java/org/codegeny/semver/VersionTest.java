@@ -37,4 +37,39 @@ public class VersionTest {
 	public void previousVersionFromPatchVersionShouldSucceed() {
 		Assert.assertEquals(new Version(1, 2, 3), new Version(1, 2, 4).previousVersion());		
 	}
+	
+	@Test
+	public void validVersions() {
+		new Version(0, 0, 1);
+		new Version(0, 1, 0);
+		new Version(0, 1, 1);
+		new Version(1, 0, 0);
+		new Version(1, 0, 1);
+		new Version(1, 1, 0);
+		new Version(1, 1, 1);
+	}
+
+	@Test(expected = Exception.class)
+	public void zeroVersionIsNotValid() {
+		new Version(0, 0, 0);
+	}
+	
+	@Test(expected = Exception.class)
+	public void negativeVersionsAreNotValid() {
+		new Version(-1, -1, -1);
+	}
+	
+	@Test
+	public void hashCodesShouldMatchForIdenticVersions() {
+		Assert.assertEquals(new Version(1, 2, 3).hashCode(), new Version(1, 2, 3).hashCode());
+	}
+	
+	@Test
+	public void equalsShouldWork() {
+		Version version = new Version(1, 2, 3);
+		Assert.assertEquals(version, version);
+		Assert.assertEquals(new Version(1, 2, 3), new Version(1, 2, 3));
+		Assert.assertNotEquals(new Version(1, 2, 3), new Version(1, 2, 4));
+		Assert.assertNotEquals(new Version(1, 2, 3), new Object());
+	}
 }

@@ -88,7 +88,7 @@ public enum MethodCheckers implements Checker<Method> {
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
 			// TODO Objects.equals() is not sufficient (what about Class attributes?)
-			return MINOR.when(fromAnnotations(previous, current) && notNull(previous.getDefaultValue(), current.getDefaultValue()) && !compare(previous.getDefaultValue(), current.getDefaultValue()));
+			return MINOR.when(fromAnnotations(previous, current) && previous.getReturnType().getName().equals(current.getReturnType().getName()) && notNull(previous.getDefaultValue(), current.getDefaultValue()) && !compare(previous.getDefaultValue(), current.getDefaultValue()));
 		}
 	},
 	CHANGE_FINAL_TO_NON_FINAL {
@@ -127,7 +127,7 @@ public enum MethodCheckers implements Checker<Method> {
 			return MAJOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() == null);
 		}
 	};
-	
+		
 	boolean compare(Object previous, Object current) {
 		if (previous instanceof Enum<?> && current instanceof Enum<?>) {
 			return compareEnum((Enum<?>) previous, (Enum<?>) current);

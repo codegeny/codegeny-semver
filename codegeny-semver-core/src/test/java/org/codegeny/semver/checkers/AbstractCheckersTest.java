@@ -7,6 +7,7 @@ import static org.codegeny.semver.Change.PATCH;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,13 +51,13 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<? supe
 		public Data<Method> toMethod() {
 			return new Data<>(
 				getPrevious() == null ? null : Stream.of(getPrevious().getDeclaredMethods()).filter(m -> !m.getName().startsWith("$")).findFirst().orElse(null),
-				getCurrent() == null ? null : Stream.of(getCurrent().getDeclaredMethods()).filter(m -> !m.getName().startsWith("$")).findFirst().orElse(null),
+				getCurrent() == null ? null : Stream.of(getCurrent().getDeclaredMethods()).filter(m -> !m.getName().startsWith("$")).reduce((a, b) -> b).orElse(null),
 				getChecks()
 			);
 		}
 	}
 	
-	private static class Data<T> {
+	protected static class Data<T> {
 		
 		private final Object check;
 		private final T previous, current;
@@ -85,11 +86,11 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<? supe
 		}
 	}
 	
-	protected static Collection<? extends Data<Class<?>>> classes(ClassData... data) {
-		return Arrays.asList(data);
+	protected static Collection<ClassData> classes(ClassData... data) {
+		return new ArrayList<>(Arrays.asList(data));
 	}
 	
-	protected static Collection<? extends Data<Constructor<?>>> constructors(ClassData... data) {
+	protected static Collection<Data<Constructor<?>>> constructors(ClassData... data) {
 		return Stream.of(data).map(ClassData::toConstructor).collect(toList());
 	}
 	
@@ -109,7 +110,7 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<? supe
 		return new Data<>(previous, current, check);
 	}
 	
-	protected static Collection<? extends Data<Field>> fields(ClassData... data) {
+	protected static Collection<Data<Field>> fields(ClassData... data) {
 		return Stream.of(data).map(ClassData::toField).collect(toList());
 	}
 
@@ -121,7 +122,7 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<? supe
 		return Stream.of(klass.getDeclaredMethods()).filter(m -> !m.getName().startsWith("$")).findFirst().orElseThrow(RuntimeException::new);
 	}
 	
-	protected static Collection<? extends Data<Method>> methods(ClassData... data) {
+	protected static Collection<Data<Method>> methods(ClassData... data) {
 		return Stream.of(data).map(ClassData::toMethod).collect(toList());
 	}
 	
