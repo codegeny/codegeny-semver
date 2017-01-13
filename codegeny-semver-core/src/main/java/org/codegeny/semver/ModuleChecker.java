@@ -139,7 +139,7 @@ public class ModuleChecker {
 			return result;
 		}
 		for (Map.Entry<String, Checker<? super T>> checker : checkers.entrySet()) {
-			Change change = checker.getValue().check(previous, current, metadata); // TODO
+			Change change = checker.getValue().check(previous, current, metadata);
 			report.report(change, checker.getKey(), previous, current);
 			result = result.combine(change);
 //			if (result == Change.MAJOR) {

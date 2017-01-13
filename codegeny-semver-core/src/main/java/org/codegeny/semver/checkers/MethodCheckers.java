@@ -1,11 +1,17 @@
 package org.codegeny.semver.checkers;
 
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
@@ -14,13 +20,6 @@ import org.codegeny.semver.Metadata;
 
 public enum MethodCheckers implements Checker<Method> {
 	
-	ADD_STATIC_METHOD {
-		
-		@Override
-		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(previous == null && current != null && isStatic(current));
-		}		
-	},
 	ADD_ANNOTATION_ELEMENT_WITH_DEFAULT_VALUE {
 		
 		@Override
@@ -42,20 +41,6 @@ public enum MethodCheckers implements Checker<Method> {
 			return MINOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() == null && current.getDefaultValue() != null);
 		}
 	},
-	ADD_NON_DEFAULT_METHOD_IMPLEMENTABLE_BY_CLIENT {
-		
-		@Override
-		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && metadata.isImplementedByClient(current));
-		}
-	},
-	ADD_NON_DEFAULT_METHOD_NOT_IMPLEMENTABLE_BY_CLIENT {
-		
-		@Override
-		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && !metadata.isImplementedByClient(current));
-		}
-	},
 	ADD_DEFAULT_METHOD_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
@@ -70,27 +55,26 @@ public enum MethodCheckers implements Checker<Method> {
 			return MINOR.when(previous == null && current != null && current.isDefault() && !metadata.isImplementedByClient(current.getDeclaringClass()));
 		}
 	},
-	CHANGE_DEFAULT_CLAUSE {
+	ADD_NON_DEFAULT_METHOD_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			// TODO Objects.equals() is not sufficient (what about Class attributes?)
-			return MINOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() != null && !compareDefaultValue(previous.getDefaultValue(), current.getDefaultValue()));
+			return MAJOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && metadata.isImplementedByClient(current));
 		}
 	},
-	CHANGE_RESULT_TYPE {
+	ADD_NON_DEFAULT_METHOD_NOT_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && !previous.getReturnType().getName().equals(current.getReturnType().getName()));
+			return MINOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && !metadata.isImplementedByClient(current));
 		}
 	},
-	CHANGE_NON_ABSTRACT_TO_ABSTRACT {
+	ADD_STATIC_METHOD {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && !isAbstract(previous) && isAbstract(current));
-		}
+			return MINOR.when(previous == null && current != null && isStatic(current));
+		}		
 	},
 	CHANGE_ABSTRACT_TO_NON_ABSTRACT {
 		
@@ -99,11 +83,26 @@ public enum MethodCheckers implements Checker<Method> {
 			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !isAbstract(current) && !isStatic(current));
 		}
 	},
-	REMOVE_DEFAULT_CLAUSE {
+	CHANGE_DEFAULT_CLAUSE {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() == null);
+			// TODO Objects.equals() is not sufficient (what about Class attributes?)
+			return MINOR.when(fromAnnotations(previous, current) && notNull(previous.getDefaultValue(), current.getDefaultValue()) && !compare(previous.getDefaultValue(), current.getDefaultValue()));
+		}
+	},
+	CHANGE_FINAL_TO_NON_FINAL {
+		
+		@Override
+		public Change check(Method previous, Method current, Metadata metadata) {
+			return MINOR.when(notNull(previous, current) && isFinal(previous) && !isFinal(current));
+		}
+	},
+	CHANGE_NON_ABSTRACT_TO_ABSTRACT {
+		
+		@Override
+		public Change check(Method previous, Method current, Metadata metadata) {
+			return MAJOR.when(notNull(previous, current) && !isAbstract(previous) && isAbstract(current));
 		}
 	},
 	CHANGE_NON_FINAL_TO_FINAL {
@@ -114,59 +113,95 @@ public enum MethodCheckers implements Checker<Method> {
 			return MAJOR.when(notNull(previous, current) && !isFinal(previous) && isFinal(current));
 		}
 	},
-	CHANGE_FINAL_TO_NON_FINAL {
+	CHANGE_RESULT_TYPE {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && isFinal(previous) && !isFinal(current));
+			return MAJOR.when(notNull(previous, current) && !previous.getReturnType().getName().equals(current.getReturnType().getName()));
+		}
+	},
+	REMOVE_DEFAULT_CLAUSE {
+		
+		@Override
+		public Change check(Method previous, Method current, Metadata metadata) {
+			return MAJOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() == null);
 		}
 	};
 	
-	boolean compareDefaultValue(Object previous, Object current)  {
-		if (!previous.getClass().equals(current.getClass())) {
-			return true;
+	boolean compare(Object previous, Object current) {
+		if (previous instanceof Enum<?> && current instanceof Enum<?>) {
+			return compareEnum((Enum<?>) previous, (Enum<?>) current);
 		}
-		if (previous.getClass().isArray()) {
-			
-			if (previous.getClass().getComponentType().isEnum()) {
-				return Arrays.deepEquals(
-					Stream.of((Enum<?>[]) previous).map(Enum::name).toArray(i -> new String[i]),
-					Stream.of((Enum<?>[]) current).map(Enum::name).toArray(i -> new String[i])
-				);
-			}
-			if (previous.getClass().getComponentType().isAnnotation()) {
-				// TODO
-				return false;
-			}
-			if (previous.getClass().getComponentType().equals(Class.class)) {
-				return Arrays.deepEquals(
-					Stream.of((Class<?>[]) previous).map(Class::getName).toArray(i -> new String[i]),
-					Stream.of((Class<?>[]) current).map(Class::getName).toArray(i -> new String[i])
-				);
-			}
-			
-		} else {
-			if (previous.getClass().isEnum()) {
-				return ((Enum<?>) previous).name().equals(((Enum<?>) current).name());
-			}
-			if (previous.getClass().isAnnotation()) {
-				// TODO
-				return false;
-			}
-			if (previous.getClass().equals(Class.class)) {
-				return ((Class<?>) previous).getName().equals(((Class<?>) current).getName());
-			}
+		if (previous instanceof Class<?> && current instanceof Class<?>) {
+			return compareClass((Class<?>) previous, (Class<?>) current);
 		}
-		
-		return previous.equals(current);
+		if (previous instanceof Annotation && current instanceof Annotation) {
+			return compareAnnotation((Annotation) previous, (Annotation) current);
+		}
+		if (previous instanceof byte[] && current instanceof byte[]) {
+			return Arrays.equals((byte[]) previous, (byte[]) current);
+		}
+		if (previous instanceof char[] && current instanceof char[]) {
+			return Arrays.equals((char[]) previous, (char[]) current);
+		}
+		if (previous instanceof short[] && current instanceof short[]) {
+			return Arrays.equals((short[]) previous, (short[]) current);
+		}
+		if (previous instanceof int[] && current instanceof int[]) {
+			return Arrays.equals((int[]) previous, (int[]) current);
+		}
+		if (previous instanceof long[] && current instanceof long[]) {
+			return Arrays.equals((long[]) previous, (long[]) current);
+		}
+		if (previous instanceof float[] && current instanceof float[]) {
+			return Arrays.equals((float[]) previous, (float[]) current);
+		}
+		if (previous instanceof double[] && current instanceof double[]) {
+			return Arrays.equals((double[]) previous, (double[]) current);
+		}
+		if (previous instanceof boolean[] && current instanceof boolean[]) {
+			return Arrays.equals((boolean[]) previous, (boolean[]) current);
+		}
+		if (previous.getClass().isArray() && current.getClass().isArray() && !previous.getClass().getComponentType().isPrimitive() && !current.getClass().getComponentType().isPrimitive()) {
+			return compareArray((Object[]) previous, (Object[]) current);
+		}
+		return Objects.equals(previous, current);
 	}
 	
+	boolean compareAnnotation(Annotation previous, Annotation current) {
+		if (!compareClass(previous.annotationType(), current.annotationType())) {
+			return false;
+		}
+		Map<String, Method> previousMethods = Stream.of(previous.annotationType().getDeclaredMethods()).collect(toMap(Method::getName, identity()));
+		Map<String, Method> currentMethods = Stream.of(current.annotationType().getDeclaredMethods()).collect(toMap(Method::getName, identity()));
+		if (!previousMethods.keySet().equals(currentMethods.keySet())) {
+			return false;
+		}
+		for (String name : previousMethods.keySet()) {
+			try {
+				if (!compare(previousMethods.get(name).invoke(previous), currentMethods.get(name).invoke(current))) {
+					return false;
+				}
+			} catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		}
+		return true;
+	}
+
+	boolean compareArray(Object[] previous, Object[] current) {
+		return previous.length == current.length && IntStream.range(0, previous.length).allMatch(i -> compare(previous[i], current[i]));		
+	}
+	
+	boolean compareClass(Class<?> previous, Class<?> current) {
+		return previous.getName().equals(current.getName());
+	}
+	
+	boolean compareEnum(Enum<?> previous, Enum<?> current) {
+		return compareClass(previous.getClass(), current.getClass()) && previous.name().equals(current.name());
+	}	
 	boolean fromAnnotations(Method previous, Method current) {
 		return notNull(previous, current) && previous.getDeclaringClass().isAnnotation() && current.getDeclaringClass().isAnnotation();
-	}
-	
-	boolean notNull(Object previous, Object current) {
-		return previous != null && current != null;
 	}
 	
 	boolean isAbstract(Method method) {
@@ -179,5 +214,9 @@ public enum MethodCheckers implements Checker<Method> {
 	
 	boolean isStatic(Method method) {
 		return Modifier.isStatic(method.getModifiers());
+	}
+	
+	boolean notNull(Object previous, Object current) {
+		return previous != null && current != null;
 	}
 }
