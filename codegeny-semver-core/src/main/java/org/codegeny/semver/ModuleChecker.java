@@ -107,9 +107,9 @@ public class ModuleChecker {
 					throw new RuntimeException("Could not load " + className + " at all!!!");
 				}
 				
-				if (previousClass == currentClass) { // common
-					continue;
-				}
+//				if (previousClass == currentClass) { // common
+//					continue;
+//				}
 				
 				List<Supplier<Change>> checkers = new LinkedList<>();
 				checkers.add(() -> check(previousClass, currentClass, classCheckers, metadata::isPublicAPI, reporter::report));
