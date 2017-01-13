@@ -11,7 +11,7 @@ public enum Access {
 		return of(klass.getModifiers());
 	}
 	
-	public static Access of(int modifiers) {
+	private static Access of(int modifiers) {
 		if (Modifier.isPublic(modifiers)) {
 			return PUBLIC;
 		} else if (Modifier.isProtected(modifiers)) {

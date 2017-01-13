@@ -9,8 +9,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.codegeny.semver.Checker;
@@ -23,12 +23,12 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 
 @RunWith(Parameterized.class)
-public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
+public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<? super T>> {
 	
 	protected static class ClassData extends Data<Class<?>> {
 
-		public ClassData(Class<?> previous, Class<?> current, Object... checks) {
-			super(previous, current, checks);
+		public ClassData(Class<?> previous, Class<?> current, Object check) {
+			super(previous, current, check);
 		}
 		
 		public Data<Constructor<?>> toConstructor() {
@@ -58,21 +58,17 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 	
 	private static class Data<T> {
 		
-		private final Set<?> checks;
+		private final Object check;
 		private final T previous, current;
-		
-		public Data(T previous, T current, Object... checks) {
-			this(previous, current, new HashSet<>(Arrays.asList(checks)));
-		}
-		
-		protected Data(T previous, T current, Set<?> checks) {
+				
+		protected Data(T previous, T current, Object check) {
 			this.previous = previous;
 			this.current = current;
-			this.checks = checks;
+			this.check = check;
 		}
 
-		public Set<?> getChecks() {
-			return checks;
+		public Object getChecks() {
+			return check;
 		}
 
 		public T getCurrent() {
@@ -85,7 +81,7 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 		
 		@Override
 		public String toString() {
-			return String.format("%s :: %s - %s", checks, previous, current);
+			return String.format("%s :: %s - %s", check, previous, current);
 		}
 	}
 	
@@ -97,8 +93,12 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 		return Stream.of(data).map(ClassData::toConstructor).collect(toList());
 	}
 	
-	protected static ClassData data(Class<?> previous, Class<?> current, Object... checks) {
-		return new ClassData(previous, current, checks);
+	protected static ClassData data(Class<?> previous, Class<?> current) {
+		return data(previous, current, null);
+	}
+	
+	protected static ClassData data(Class<?> previous, Class<?> current, Object check) {
+		return new ClassData(previous, current, check);
 	}
 	
 	protected static Collection<?> fields(ClassData... data) {
@@ -110,6 +110,7 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 	}
 	
 	private final Class<C> checkerClass;
+	
 	@Parameter
 	public Data<T> data;
 	
@@ -126,6 +127,9 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<T>> {
 
 	@Test
 	public void test() {
-		Assert.assertEquals(data.getChecks(), Stream.of(checkerClass.getEnumConstants()).filter(c -> c.check(data.getPrevious(), data.getCurrent(), metadata) != PATCH).collect(toSet()));
+		Assert.assertEquals(
+			Optional.ofNullable(data.getChecks()).map(Collections::singleton).orElseGet(Collections::emptySet),
+			Stream.of(checkerClass.getEnumConstants()).filter(c -> c.check(data.getPrevious(), data.getCurrent(), metadata) != PATCH).collect(toSet())
+		);
 	}
 }
