@@ -1,14 +1,13 @@
 package org.codegeny.semver.checkers;
 
-import static java.util.stream.Collectors.toList;
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
 import static org.codegeny.semver.checkers.Access.PUBLIC;
-
-import java.lang.reflect.Modifier;
-import java.util.List;
-import java.util.function.BiPredicate;
-import java.util.stream.Stream;
+import static org.codegeny.semver.checkers.Checkers.enumConstants;
+import static org.codegeny.semver.checkers.Checkers.isAbstract;
+import static org.codegeny.semver.checkers.Checkers.isFinal;
+import static org.codegeny.semver.checkers.Checkers.notNull;
+import static org.codegeny.semver.checkers.Checkers.sameKind;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.Checker;
@@ -86,29 +85,5 @@ public enum ClassCheckers implements Checker<Class<?>> {
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
 			return MINOR.when(sameKind(previous, current) && isFinal(previous) && !isFinal(current));
 		}
-	};
-	
-	boolean enumConstants(Class<?> previous, Class<?> current, BiPredicate<? super List<String>, ? super List<String>> predicate) {
-		return notNull(previous, current) && previous.isEnum() && current.isEnum() && predicate.test(enumConstantsOf(previous), enumConstantsOf(current));
-	}
-	
-	List<String> enumConstantsOf(Class<?> klass) {
-		return Stream.of(klass.asSubclass(Enum.class).getEnumConstants()).map(Enum::name).collect(toList());
-	}
-	
-	boolean sameKind(Class<?> previous, Class<?> current) {
-		return notNull(previous, current) && Kind.of(previous) == Kind.of(current);
-	}
-	
-	boolean notNull(Object previous, Object current) {
-		return previous != null && current != null;
-	}
-	
-	boolean isAbstract(Class<?> klass) {
-		return Modifier.isAbstract(klass.getModifiers());
-	}
-	
-	boolean isFinal(Class<?> klass) {
-		return Modifier.isFinal(klass.getModifiers());
 	}
 }

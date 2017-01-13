@@ -1,18 +1,15 @@
 package org.codegeny.semver.checkers;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
+import static org.codegeny.semver.checkers.Checkers.compare;
+import static org.codegeny.semver.checkers.Checkers.fromAnnotations;
+import static org.codegeny.semver.checkers.Checkers.isAbstract;
+import static org.codegeny.semver.checkers.Checkers.isFinal;
+import static org.codegeny.semver.checkers.Checkers.isStatic;
+import static org.codegeny.semver.checkers.Checkers.notNull;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.Checker;
@@ -126,97 +123,5 @@ public enum MethodCheckers implements Checker<Method> {
 		public Change check(Method previous, Method current, Metadata metadata) {
 			return MAJOR.when(fromAnnotations(previous, current) && previous.getDefaultValue() != null && current.getDefaultValue() == null);
 		}
-	};
-		
-	boolean compare(Object previous, Object current) {
-		if (previous instanceof Enum<?> && current instanceof Enum<?>) {
-			return compareEnum((Enum<?>) previous, (Enum<?>) current);
-		}
-		if (previous instanceof Class<?> && current instanceof Class<?>) {
-			return compareClass((Class<?>) previous, (Class<?>) current);
-		}
-		if (previous instanceof Annotation && current instanceof Annotation) {
-			return compareAnnotation((Annotation) previous, (Annotation) current);
-		}
-		if (previous instanceof byte[] && current instanceof byte[]) {
-			return Arrays.equals((byte[]) previous, (byte[]) current);
-		}
-		if (previous instanceof char[] && current instanceof char[]) {
-			return Arrays.equals((char[]) previous, (char[]) current);
-		}
-		if (previous instanceof short[] && current instanceof short[]) {
-			return Arrays.equals((short[]) previous, (short[]) current);
-		}
-		if (previous instanceof int[] && current instanceof int[]) {
-			return Arrays.equals((int[]) previous, (int[]) current);
-		}
-		if (previous instanceof long[] && current instanceof long[]) {
-			return Arrays.equals((long[]) previous, (long[]) current);
-		}
-		if (previous instanceof float[] && current instanceof float[]) {
-			return Arrays.equals((float[]) previous, (float[]) current);
-		}
-		if (previous instanceof double[] && current instanceof double[]) {
-			return Arrays.equals((double[]) previous, (double[]) current);
-		}
-		if (previous instanceof boolean[] && current instanceof boolean[]) {
-			return Arrays.equals((boolean[]) previous, (boolean[]) current);
-		}
-		if (previous.getClass().isArray() && current.getClass().isArray() && !previous.getClass().getComponentType().isPrimitive() && !current.getClass().getComponentType().isPrimitive()) {
-			return compareArray((Object[]) previous, (Object[]) current);
-		}
-		return Objects.equals(previous, current);
-	}
-	
-	boolean compareAnnotation(Annotation previous, Annotation current) {
-		if (!compareClass(previous.annotationType(), current.annotationType())) {
-			return false;
-		}
-		Map<String, Method> previousMethods = Stream.of(previous.annotationType().getDeclaredMethods()).collect(toMap(Method::getName, identity()));
-		Map<String, Method> currentMethods = Stream.of(current.annotationType().getDeclaredMethods()).collect(toMap(Method::getName, identity()));
-		if (!previousMethods.keySet().equals(currentMethods.keySet())) {
-			return false;
-		}
-		for (String name : previousMethods.keySet()) {
-			try {
-				if (!compare(previousMethods.get(name).invoke(previous), currentMethods.get(name).invoke(current))) {
-					return false;
-				}
-			} catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		}
-		return true;
-	}
-
-	boolean compareArray(Object[] previous, Object[] current) {
-		return previous.length == current.length && IntStream.range(0, previous.length).allMatch(i -> compare(previous[i], current[i]));		
-	}
-	
-	boolean compareClass(Class<?> previous, Class<?> current) {
-		return previous.getName().equals(current.getName());
-	}
-	
-	boolean compareEnum(Enum<?> previous, Enum<?> current) {
-		return compareClass(previous.getClass(), current.getClass()) && previous.name().equals(current.name());
-	}	
-	boolean fromAnnotations(Method previous, Method current) {
-		return notNull(previous, current) && previous.getDeclaringClass().isAnnotation() && current.getDeclaringClass().isAnnotation();
-	}
-	
-	boolean isAbstract(Method method) {
-		return Modifier.isAbstract(method.getModifiers());
-	}
-	
-	boolean isFinal(Method method) {
-		return Modifier.isFinal(method.getModifiers());
-	}
-	
-	boolean isStatic(Method method) {
-		return Modifier.isStatic(method.getModifiers());
-	}
-	
-	boolean notNull(Object previous, Object current) {
-		return previous != null && current != null;
 	}
 }

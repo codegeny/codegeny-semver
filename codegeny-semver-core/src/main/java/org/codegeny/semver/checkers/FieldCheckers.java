@@ -1,6 +1,7 @@
 package org.codegeny.semver.checkers;
 
 import static org.codegeny.semver.Change.MAJOR;
+import static org.codegeny.semver.checkers.Checkers.notNull;
 
 import java.lang.reflect.Field;
 
@@ -16,9 +17,5 @@ public enum FieldCheckers implements Checker<Field> {
 		public Change check(Field previous, Field current, Metadata metadata) {
 			return MAJOR.when(notNull(previous, current) && !previous.getType().getName().equals(current.getType().getName()));
 		}
-	};
-	
-	boolean notNull(Object previous, Object current) {
-		return previous != null && current != null;
 	}
 }

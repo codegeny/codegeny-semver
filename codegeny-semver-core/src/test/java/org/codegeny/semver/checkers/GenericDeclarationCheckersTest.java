@@ -138,6 +138,16 @@ public class GenericDeclarationCheckersTest extends AbstractCheckersTest<Generic
 		}
 	}
 	
+	interface TestType32 {
+		
+		<E extends TestType30<Number>.SubType1<Long>> void m();
+	}
+	
+	interface TestType33 {
+		
+		<E extends TestType30<Number>.SubType2<Long>> void m();
+	}
+	
 	@Parameters(name = "{0}")
 	public static Collection<?> parameters() {
 		return methods(
@@ -213,7 +223,9 @@ public class GenericDeclarationCheckersTest extends AbstractCheckersTest<Generic
 			data(TestType22.class, TestType22.class),
 			
 			data(TestType30.SubType1.class, TestType30.SubType2.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
-			data(TestType31.SubType.class, TestType31.SubType.class)
+			data(TestType31.SubType.class, TestType31.SubType.class),
+			
+			data(TestType32.class, TestType33.class, CHANGE_TYPE_PARAMETERS_BOUNDS)
 			
 		);
 	}
