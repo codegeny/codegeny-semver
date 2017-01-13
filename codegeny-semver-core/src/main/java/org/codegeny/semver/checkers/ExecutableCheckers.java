@@ -48,7 +48,7 @@ public enum ExecutableCheckers implements Checker<Executable> {
 	}
 	
 	boolean isChecked(Class<?> type) {
-		return Exception.class.isAssignableFrom(type) && !RuntimeException.class.isAssignableFrom(type);
+		return !RuntimeException.class.isAssignableFrom(type) && !Error.class.isAssignableFrom(type);
 	}
 	
 	boolean notNull(Object previous, Object current) {

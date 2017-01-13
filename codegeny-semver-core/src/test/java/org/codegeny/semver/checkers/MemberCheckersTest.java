@@ -31,6 +31,8 @@ public class MemberCheckersTest extends AbstractCheckersTest<Member, MemberCheck
 			data(null, TestType1.class),
 			data(TestType1.class, null, DELETE_MEMBER),
 			data(TestType1.class, TestType1.class),
+			data(TestType2.class, TestType2.class),
+			data(TestType3.class, TestType3.class),
 			data(TestType1.class, TestType2.class, INCREASE_ACCESS),
 			data(TestType2.class, TestType1.class, DECREASE_ACCESS),
 			data(TestType1.class, TestType3.class, CHANGE_NON_STATIC_TO_STATIC),

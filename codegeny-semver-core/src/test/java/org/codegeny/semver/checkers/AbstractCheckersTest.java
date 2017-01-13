@@ -85,11 +85,11 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<? supe
 		}
 	}
 	
-	protected static Collection<?> classes(ClassData... data) {
+	protected static Collection<? extends Data<Class<?>>> classes(ClassData... data) {
 		return Arrays.asList(data);
 	}
 	
-	protected static Collection<?> constructors(ClassData... data) {
+	protected static Collection<? extends Data<Constructor<?>>> constructors(ClassData... data) {
 		return Stream.of(data).map(ClassData::toConstructor).collect(toList());
 	}
 	
@@ -101,11 +101,27 @@ public abstract class AbstractCheckersTest<T, C extends Enum<C> & Checker<? supe
 		return new ClassData(previous, current, check);
 	}
 	
-	protected static Collection<?> fields(ClassData... data) {
+	protected static <Z> Data<Z> data(Z previous, Z current) {
+		return data(previous, current, null);
+	}
+	
+	protected static <Z> Data<Z> data(Z previous, Z current, Object check) {
+		return new Data<>(previous, current, check);
+	}
+	
+	protected static Collection<? extends Data<Field>> fields(ClassData... data) {
 		return Stream.of(data).map(ClassData::toField).collect(toList());
 	}
 
-	protected static Collection<?> methods(ClassData... data) {
+	protected static Method method(Class<?> klass, String name) {
+		return Stream.of(klass.getDeclaredMethods()).filter(m -> m.getName().equals(name)).findFirst().orElseThrow(RuntimeException::new);
+	}
+	
+	protected static Method method(Class<?> klass) {
+		return Stream.of(klass.getDeclaredMethods()).filter(m -> !m.getName().startsWith("$")).findFirst().orElseThrow(RuntimeException::new);
+	}
+	
+	protected static Collection<? extends Data<Method>> methods(ClassData... data) {
 		return Stream.of(data).map(ClassData::toMethod).collect(toList());
 	}
 	

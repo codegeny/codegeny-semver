@@ -69,7 +69,9 @@ public class ClassCheckersTest extends AbstractCheckersTest<Class<?>, ClassCheck
 			data(TestType8.class, TestType5.class, TYPE_CHANGE_ABSTRACT_TO_NON_ABSTRACT),
 			
 			data(TestType5.class, TestType9.class, TYPE_CHANGE_NON_FINAL_TO_FINAL),
-			data(TestType9.class, TestType5.class, TYPE_CHANGE_FINAL_TO_NON_FINAL)
+			data(TestType9.class, TestType5.class, TYPE_CHANGE_FINAL_TO_NON_FINAL),
+			
+			data(TestType8.class, TestType8.class)
 		);
 	}
 	

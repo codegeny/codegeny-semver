@@ -26,6 +26,9 @@ public class ConstructorCheckersTest extends AbstractCheckersTest<Constructor<?>
 	public static Collection<?> parameters() {
 		return constructors(
 			data(null, null),
+			data(TestType2.class, TestType3.class),
+			data(TestType2.class, null), 
+			data(TestType3.class, null),
 			data(null, TestType2.class, ADD_CONSTRUCTOR_IF_NO_CONSTRUCTORS_EXISTS), 
 			data(null, TestType3.class, ADD_CONSTRUCTOR_IF_OTHER_CONSTRUCTORS_EXISTS)
 		);

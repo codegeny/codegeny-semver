@@ -1,6 +1,7 @@
 ![Project status](https://img.shields.io/badge/status-experimental-red.svg)
 [![Build Status](https://img.shields.io/travis/codegeny/codegeny-semver.svg)](https://travis-ci.org/codegeny/codegeny-semver)
 [![Code Coverage](https://img.shields.io/codecov/c/github/codegeny/codegeny-semver.svg)](https://codecov.io/gh/codegeny/codegeny-semver)
+[![Code Analysis](https://img.shields.io/codacy/grade/f714017b351e4d8981a6df40857e51f9.svg)](https://www.codacy.com/app/codegeny/codegeny-semver)
 
 # codegeny-semver
 

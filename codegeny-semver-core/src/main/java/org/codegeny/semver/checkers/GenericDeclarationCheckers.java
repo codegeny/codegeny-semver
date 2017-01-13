@@ -1,6 +1,5 @@
 package org.codegeny.semver.checkers;
 
-import static java.util.stream.Collectors.toList;
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
 
@@ -12,10 +11,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.Checker;
@@ -41,7 +40,7 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 		
 		@Override
 		public Change check(GenericDeclaration previous, GenericDeclaration current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && current.getTypeParameters().length == previous.getTypeParameters().length && !compareTypes(previous.getTypeParameters(), current.getTypeParameters(), new HashSet<>(), new HashSet<>()));
+			return MAJOR.when(notNull(previous, current) && current.getTypeParameters().length == previous.getTypeParameters().length && !compareTypes(previous.getTypeParameters(), current.getTypeParameters(), new HashMap<>()));
 		}
 	},
 	DELETE_TYPE_PARAMETER {
@@ -56,8 +55,8 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 		return left.getName().equals(right.getName());
 	}
 	
-	boolean compareGenericArrayType(GenericArrayType left, GenericArrayType right, Set<String> leftVariables, Set<String> rightVariables) {
-		return compareType(left.getGenericComponentType(), right.getGenericComponentType(), leftVariables, rightVariables);
+	boolean compareGenericArrayType(GenericArrayType left, GenericArrayType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+		return compareType(left.getGenericComponentType(), right.getGenericComponentType(), variables);
 	}
 	
 	boolean compareGenericDeclaration(GenericDeclaration left, GenericDeclaration right) {
@@ -73,50 +72,49 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 		return false;
 	}
 	
-	boolean compareParameterizedType(ParameterizedType left, ParameterizedType right, Set<String> leftVariables, Set<String> rightVariables) {
-		return compareType(left.getRawType(), right.getRawType(), leftVariables, rightVariables)
-			&& compareType(left.getOwnerType(), right.getOwnerType(), leftVariables, rightVariables)
-			&& compareTypes(left.getActualTypeArguments(), right.getActualTypeArguments(), leftVariables, rightVariables);
+	boolean compareParameterizedType(ParameterizedType left, ParameterizedType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+		return compareType(left.getRawType(), right.getRawType(), variables)
+			&& compareType(left.getOwnerType(), right.getOwnerType(), variables)
+			&& compareTypes(left.getActualTypeArguments(), right.getActualTypeArguments(), variables);
 	}
 	
-	boolean compareType(Type left, Type right, Set<String> leftVariables, Set<String> rightVariables) {
+	boolean compareType(Type left, Type right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		if (left instanceof Class<?> && right instanceof Class<?>) {
 			return compareClass((Class<?>) left, (Class<?>) right);
 		}
 		if (left instanceof ParameterizedType && right instanceof ParameterizedType) {
-			return compareParameterizedType((ParameterizedType) left, (ParameterizedType) right, leftVariables, rightVariables);
+			return compareParameterizedType((ParameterizedType) left, (ParameterizedType) right, variables);
 		}
 		if (left instanceof TypeVariable<?> && right instanceof TypeVariable<?>) {
-			return compareTypeVariable((TypeVariable<?>) left, (TypeVariable<?>) right, leftVariables, rightVariables);
+			return compareTypeVariable((TypeVariable<?>) left, (TypeVariable<?>) right, variables);
 		}
 		if (left instanceof WildcardType && right instanceof WildcardType) {
-			return compareWildcardType((WildcardType) left, (WildcardType) right, leftVariables, rightVariables);
+			return compareWildcardType((WildcardType) left, (WildcardType) right, variables);
 		}
 		if (left instanceof GenericArrayType && right instanceof GenericArrayType) {
-			return compareGenericArrayType((GenericArrayType) left, (GenericArrayType) right, leftVariables, rightVariables);
+			return compareGenericArrayType((GenericArrayType) left, (GenericArrayType) right, variables);
 		}
 		return left == null && right == null;
 	}
 	
-	boolean compareTypes(Type[] left, Type[] right, Set<String> leftVariables, Set<String> rightVariables) {
-		return left.length == right.length && IntStream.range(0, left.length).allMatch(i -> compareType(left[i], right[i], leftVariables, rightVariables));
+	boolean compareTypes(Type[] left, Type[] right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+		return left.length == right.length && IntStream.range(0, left.length).allMatch(i -> compareType(left[i], right[i], variables));
 	}
 	
 	// TODO still not sure about this
-	boolean compareTypeVariable(TypeVariable<?> left, TypeVariable<?> right, Set<String> leftVariables, Set<String> rightVariables) {
+	boolean compareTypeVariable(TypeVariable<?> left, TypeVariable<?> right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		if (position(left) == position(right) && compareGenericDeclaration(left.getGenericDeclaration(), right.getGenericDeclaration())) {
-			if (leftVariables.contains(left.getName()) && rightVariables.contains(right.getName())) {
-				return true;
+			if (variables.containsKey(left)) {
+				return variables.get(left).equals(right);
 			}
-			leftVariables.add(left.getName()); // what happens if a method type variable hides a class type variable?
-			rightVariables.add(right.getName());
-			return compareTypes(left.getBounds(), right.getBounds(), leftVariables, rightVariables);
+			variables.put(left, right);
+			return compareTypes(left.getBounds(), right.getBounds(), variables);
 		}
 		return false;
 	}
 	
-	boolean compareWildcardType(WildcardType left, WildcardType right, Set<String> leftVariables, Set<String> rightVariables) {
-		return compareTypes(left.getLowerBounds(), right.getLowerBounds(), leftVariables, rightVariables) && compareTypes(left.getUpperBounds(), right.getUpperBounds(), leftVariables, rightVariables);
+	boolean compareWildcardType(WildcardType left, WildcardType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+		return compareTypes(left.getLowerBounds(), right.getLowerBounds(), variables) && compareTypes(left.getUpperBounds(), right.getUpperBounds(), variables);
 	}
 	
 	boolean notNull(Object previous, Object current) {
@@ -124,6 +122,6 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 	}
 	
 	int position(TypeVariable<?> typeVariable) {
-		return Stream.of(typeVariable.getGenericDeclaration().getTypeParameters()).map(TypeVariable::getName).collect(toList()).indexOf(typeVariable.getName());
+		return Arrays.asList(typeVariable.getGenericDeclaration().getTypeParameters()).indexOf(typeVariable);
 	}
 }
