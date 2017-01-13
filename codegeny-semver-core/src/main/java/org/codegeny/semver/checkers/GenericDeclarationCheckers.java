@@ -3,10 +3,8 @@ package org.codegeny.semver.checkers;
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.GenericDeclaration;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -63,13 +61,7 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 		if (left instanceof Class<?> && right instanceof Class<?>) {
 			return compareClass((Class<?>) left, (Class<?>) right);
 		}
-		if (left instanceof Constructor<?> && right instanceof Constructor<?>) {
-			return true;
-		}
-		if (left instanceof Method && right instanceof Method) {
-			return true;
-		}
-		return false;
+		return left.getClass().equals(right.getClass());
 	}
 	
 	boolean compareParameterizedType(ParameterizedType left, ParameterizedType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
@@ -94,7 +86,7 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 		if (left instanceof GenericArrayType && right instanceof GenericArrayType) {
 			return compareGenericArrayType((GenericArrayType) left, (GenericArrayType) right, variables);
 		}
-		return left == null && right == null;
+		return left == right;
 	}
 	
 	boolean compareTypes(Type[] left, Type[] right, Map<TypeVariable<?>, TypeVariable<?>> variables) {

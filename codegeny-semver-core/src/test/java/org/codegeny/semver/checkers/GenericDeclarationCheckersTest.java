@@ -59,6 +59,57 @@ public class GenericDeclarationCheckersTest extends AbstractCheckersTest<Generic
 		<O extends Collection<I>, I extends Collection<O>> void m();
 	}
 	
+	interface TestType10 {
+		
+		<E, T extends Set<?>> void m();
+	}
+	
+	interface TestType11 {
+		
+		<E, T extends Set<E>> void m();
+	}
+	
+	interface TestType12 {
+		
+		<E, T extends Set<E[]>> void m();
+	}
+	
+	interface TestType13 {
+		
+		<E, T extends Set<Set<E>>> void m();
+	}
+	
+	interface TestType14 {
+		
+		<E, T extends Set<Number>> void m();
+	}
+	
+	interface TestType15 {
+		
+		<E extends Set<? extends Number>> void m();
+	}
+	
+	interface TestType16 {
+		
+		<E extends Set<? super Number>> void m();
+	}
+	
+	interface TestType20<E> {
+		
+		<Z, T extends Set<E>> void m();
+	}
+	
+	interface TestType21 {
+		
+		<Z, T extends Set<Z>> void m();
+	}
+	
+	interface TestType22<E> {
+		
+		@SuppressWarnings("hiding")
+		<E, T extends Set<E>> void m();
+	}
+	
 	@Parameters(name = "{0}")
 	public static Collection<?> parameters() {
 		return methods(
@@ -72,7 +123,55 @@ public class GenericDeclarationCheckersTest extends AbstractCheckersTest<Generic
 			data(TestType2.class, TestType4.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
 			data(TestType5.class, TestType6.class),
 			data(TestType6.class, TestType7.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
-			data(TestType8.class, TestType9.class)
+			data(TestType8.class, TestType9.class),
+			
+			data(TestType10.class, TestType10.class),
+			data(TestType10.class, TestType11.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType10.class, TestType12.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType10.class, TestType13.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType10.class, TestType14.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+
+			data(TestType11.class, TestType10.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType11.class, TestType11.class),
+			data(TestType11.class, TestType12.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType11.class, TestType13.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType11.class, TestType14.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+
+			data(TestType12.class, TestType10.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType12.class, TestType11.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType12.class, TestType12.class),
+			data(TestType12.class, TestType13.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType12.class, TestType14.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+
+			data(TestType13.class, TestType10.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType13.class, TestType11.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType13.class, TestType12.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType13.class, TestType13.class),
+			data(TestType13.class, TestType14.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			
+			data(TestType14.class, TestType10.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType14.class, TestType11.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType14.class, TestType12.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType14.class, TestType13.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType14.class, TestType14.class),
+			
+			data(TestType15.class, TestType15.class),
+			data(TestType15.class, TestType16.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType16.class, TestType16.class),
+			data(TestType16.class, TestType15.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			
+			data(TestType20.class, TestType20.class),
+			data(TestType20.class, TestType21.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType20.class, TestType22.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			
+			data(TestType21.class, TestType20.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType21.class, TestType21.class),
+			data(TestType21.class, TestType22.class),
+			
+			data(TestType22.class, TestType20.class, CHANGE_TYPE_PARAMETERS_BOUNDS),
+			data(TestType22.class, TestType21.class),
+			data(TestType22.class, TestType22.class)
+			
 		);
 	}
 	

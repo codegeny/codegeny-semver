@@ -64,7 +64,9 @@ public class ExecutableCheckersTest extends AbstractCheckersTest<Executable, Exe
 			data(TestType4.class, TestType1.class, REMOVE_CHECKED_EXCEPTION),
 			data(TestType5.class, TestType1.class),
 			data(TestType6.class, TestType7.class, CHANGE_LAST_PARAMETER_FROM_VARARGS_TO_ARRAY),
-			data(TestType7.class, TestType6.class, CHANGE_LAST_PARAMETER_FROM_ARRAY_TO_VARARGS)
+			data(TestType7.class, TestType6.class, CHANGE_LAST_PARAMETER_FROM_ARRAY_TO_VARARGS),
+			data(TestType6.class, TestType6.class),
+			data(TestType7.class, TestType7.class)
 		);
 	}
 	
