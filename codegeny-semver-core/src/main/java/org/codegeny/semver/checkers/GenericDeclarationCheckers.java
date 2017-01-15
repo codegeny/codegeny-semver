@@ -6,7 +6,6 @@ import static org.codegeny.semver.checkers.Checkers.compareTypes;
 import static org.codegeny.semver.checkers.Checkers.notNull;
 
 import java.lang.reflect.GenericDeclaration;
-import java.util.HashMap;
 
 import org.codegeny.semver.Change;
 import org.codegeny.semver.Checker;
@@ -32,7 +31,7 @@ public enum GenericDeclarationCheckers implements Checker<GenericDeclaration> {
 		
 		@Override
 		public Change check(GenericDeclaration previous, GenericDeclaration current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && current.getTypeParameters().length == previous.getTypeParameters().length && !compareTypes(previous.getTypeParameters(), current.getTypeParameters(), new HashMap<>()));
+			return MAJOR.when(notNull(previous, current) && current.getTypeParameters().length == previous.getTypeParameters().length && !compareTypes(previous.getTypeParameters(), current.getTypeParameters()));
 		}
 	},
 	DELETE_TYPE_PARAMETER {

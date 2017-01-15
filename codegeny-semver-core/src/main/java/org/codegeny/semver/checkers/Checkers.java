@@ -17,6 +17,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,7 +68,7 @@ class Checkers {
 		return Objects.equals(previous, current);
 	}
 	
-	static boolean compareAnnotation(Annotation previous, Annotation current) {
+	private static boolean compareAnnotation(Annotation previous, Annotation current) {
 		if (!compareClass(previous.annotationType(), current.annotationType())) {
 			return false;
 		}
@@ -88,7 +89,7 @@ class Checkers {
 		return true;
 	}
 	
-	static boolean compareArray(Object[] previous, Object[] current) {
+	private static boolean compareArray(Object[] previous, Object[] current) {
 		return previous.length == current.length && IntStream.range(0, previous.length).allMatch(i -> compare(previous[i], current[i]));		
 	}
 	
@@ -96,28 +97,32 @@ class Checkers {
 		return left.getName().equals(right.getName());
 	}
 	
-	static boolean compareEnum(Enum<?> previous, Enum<?> current) {
+	private static boolean compareEnum(Enum<?> previous, Enum<?> current) {
 		return compareClass(previous.getClass(), current.getClass()) && previous.name().equals(current.name());
 	}
 	
-	static boolean compareGenericArrayType(GenericArrayType left, GenericArrayType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+	private static boolean compareGenericArrayType(GenericArrayType left, GenericArrayType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		return compareType(left.getGenericComponentType(), right.getGenericComponentType(), variables);
 	}
 	
-	static boolean compareGenericDeclaration(GenericDeclaration left, GenericDeclaration right) {
+	private static boolean compareGenericDeclaration(GenericDeclaration left, GenericDeclaration right) {
 		if (left instanceof Class<?> && right instanceof Class<?>) {
 			return compareClass((Class<?>) left, (Class<?>) right);
 		}
 		return left.getClass().equals(right.getClass());
 	}
 	
-	static boolean compareParameterizedType(ParameterizedType left, ParameterizedType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+	private static boolean compareParameterizedType(ParameterizedType left, ParameterizedType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		return compareType(left.getRawType(), right.getRawType(), variables)
 			&& compareType(left.getOwnerType(), right.getOwnerType(), variables)
 			&& compareTypes(left.getActualTypeArguments(), right.getActualTypeArguments(), variables);
 	}
-	
-	static boolean compareType(Type left, Type right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+
+	static boolean compareType(Type left, Type right) {
+		return compareType(left, right, new HashMap<>());
+	}
+
+	private static boolean compareType(Type left, Type right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		if (left instanceof Class<?> && right instanceof Class<?>) {
 			return compareClass((Class<?>) left, (Class<?>) right);
 		}
@@ -135,13 +140,17 @@ class Checkers {
 		}
 		return left == right;
 	}
+		
+	static boolean compareTypes(Type[] left, Type[] right) {
+		return compareTypes(left, right, new HashMap<>());
+	}
 	
-	static boolean compareTypes(Type[] left, Type[] right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+	private static boolean compareTypes(Type[] left, Type[] right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		return left.length == right.length && IntStream.range(0, left.length).allMatch(i -> compareType(left[i], right[i], variables));
 	}
 	
 	// TODO still not sure about this
-	static boolean compareTypeVariable(TypeVariable<?> left, TypeVariable<?> right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+	private static boolean compareTypeVariable(TypeVariable<?> left, TypeVariable<?> right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		if (position(left) == position(right) && compareGenericDeclaration(left.getGenericDeclaration(), right.getGenericDeclaration())) {
 			if (variables.containsKey(left)) {
 				return variables.get(left).equals(right);
@@ -152,7 +161,7 @@ class Checkers {
 		return false;
 	}
 	
-	static boolean compareWildcardType(WildcardType left, WildcardType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+	private static boolean compareWildcardType(WildcardType left, WildcardType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		return compareTypes(left.getLowerBounds(), right.getLowerBounds(), variables) && compareTypes(left.getUpperBounds(), right.getUpperBounds(), variables);
 	}
 	
@@ -194,13 +203,17 @@ class Checkers {
 		
 	static boolean isStatic(Member member) {
 		return Modifier.isStatic(member.getModifiers());
-	}	
+	}
+	
+	static boolean isStatic(Class<?> klass) {
+		return Modifier.isStatic(klass.getModifiers());
+	}
 
 	static boolean notNull(Object previous, Object current) {
 		return previous != null && current != null;
 	}
 	
-	static int position(TypeVariable<?> typeVariable) {
+	private static int position(TypeVariable<?> typeVariable) {
 		return Arrays.asList(typeVariable.getGenericDeclaration().getTypeParameters()).indexOf(typeVariable);
 	}
 	

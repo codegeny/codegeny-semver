@@ -1,6 +1,17 @@
 package org.codegeny.semver.checkers;
 
-import static org.codegeny.semver.checkers.ClassCheckers.*;
+import static org.codegeny.semver.checkers.ClassCheckers.ADD_TYPE;
+import static org.codegeny.semver.checkers.ClassCheckers.DECREASE_ACCESS;
+import static org.codegeny.semver.checkers.ClassCheckers.DELETE_TYPE;
+import static org.codegeny.semver.checkers.ClassCheckers.ENUM_ADD_CONSTANT;
+import static org.codegeny.semver.checkers.ClassCheckers.ENUM_DELETE_CONSTANT;
+import static org.codegeny.semver.checkers.ClassCheckers.ENUM_REORDER_CONSTANTS;
+import static org.codegeny.semver.checkers.ClassCheckers.INCREASE_ACCESS;
+import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_ABSTRACT_TO_NON_ABSTRACT;
+import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_FINAL_TO_NON_FINAL;
+import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_KIND;
+import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_NON_ABSTRACT_TO_ABSTRACT;
+import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_NON_FINAL_TO_FINAL;
 
 import java.util.Collection;
 
@@ -8,26 +19,26 @@ import org.junit.runners.Parameterized.Parameters;
 
 public class ClassCheckersTest extends AbstractCheckersTest<Class<?>, ClassCheckers> {
 	
-	enum TestType1 {
+	public enum TestType1 {
 		
 		ONE
 	}
 	
-	enum TestType2 {
+	public enum TestType2 {
 		
 		ONE, TWO
 	}
 	
-	enum TestType3 {
+	public enum TestType3 {
 		
 		TWO, ONE
 	}
 	
-	interface TestType4 {}
+	public interface TestType4 {}
 	
 	public static class TestType5 {}
 	
-	@interface TestType6 {}
+	public @interface TestType6 {}
 	
 	protected static class TestType7 {}
 	
@@ -39,8 +50,8 @@ public class ClassCheckersTest extends AbstractCheckersTest<Class<?>, ClassCheck
 	public static Collection<?> parameters() {
 		return classes(
 			data(null, null),
-			data(null, TestType1.class),
-			data(TestType1.class, null),
+			data(null, TestType1.class, ADD_TYPE),
+			data(TestType1.class, null, DELETE_TYPE),
 			data(TestType1.class, TestType1.class),
 			data(TestType1.class, TestType2.class, ENUM_ADD_CONSTANT), 
 			data(TestType2.class, TestType1.class, ENUM_DELETE_CONSTANT),
@@ -62,8 +73,8 @@ public class ClassCheckersTest extends AbstractCheckersTest<Class<?>, ClassCheck
 			data(TestType6.class, TestType4.class, TYPE_CHANGE_KIND),
 			data(TestType6.class, TestType5.class, TYPE_CHANGE_KIND),		
 
-			data(TestType5.class, TestType7.class, TYPE_CHANGE_PUBLIC_TO_NON_PUBLIC),
-			data(TestType7.class, TestType5.class, TYPE_CHANGE_NON_PUBLIC_TO_PUBLIC),
+			data(TestType5.class, TestType7.class, DECREASE_ACCESS),
+			data(TestType7.class, TestType5.class, INCREASE_ACCESS),
 			
 			data(TestType5.class, TestType8.class, TYPE_CHANGE_NON_ABSTRACT_TO_ABSTRACT),
 			data(TestType8.class, TestType5.class, TYPE_CHANGE_ABSTRACT_TO_NON_ABSTRACT),

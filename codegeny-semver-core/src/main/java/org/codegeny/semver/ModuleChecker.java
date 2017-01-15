@@ -1,5 +1,6 @@
 package org.codegeny.semver;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
@@ -41,7 +42,7 @@ public class ModuleChecker {
 		
 		void report(Change change, String name, T previous, T current);
 	}
-			
+				
 	public static ModuleChecker newConfiguredInstance() {
 		
 		Set<Metadata> metaSet = new HashSet<>();
@@ -190,7 +191,7 @@ public class ModuleChecker {
 	}
 	
 	private Object key(Executable executable) {
-		return new HashKey(executable.getName(), new HashKey(Stream.of(executable.getParameterTypes()).map(Class::getName)));
+		return Stream.concat(Stream.of(executable.getName()), Stream.of(executable.getParameterTypes()).map(Class::getName)).collect(toList());
 	}
 	
 	private URLClassLoader newClassLoader(Set<URL> urls, ClassLoader parent) {

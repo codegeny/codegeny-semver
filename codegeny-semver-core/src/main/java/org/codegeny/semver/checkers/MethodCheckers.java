@@ -77,7 +77,21 @@ public enum MethodCheckers implements Checker<Method> {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !isAbstract(current) && !isStatic(current));
+			return MINOR.when(notNull(previous, current) && isAbstract(previous) && !current.isDefault() && !isAbstract(current) && !isStatic(current));
+		}
+	},
+	CHANGE_ABSTRACT_TO_DEFAULT {
+		
+		@Override
+		public Change check(Method previous, Method current, Metadata metadata) {
+			return MINOR.when(notNull(previous, current) && isAbstract(previous) && current.isDefault());
+		}
+	},
+	CHANGE_DEFAULT_TO_ABSTRACT {
+		
+		@Override
+		public Change check(Method previous, Method current, Metadata metadata) {
+			return MAJOR.when(notNull(previous, current) && previous.isDefault() && isAbstract(current));
 		}
 	},
 	CHANGE_DEFAULT_CLAUSE {
@@ -99,7 +113,7 @@ public enum MethodCheckers implements Checker<Method> {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && !isAbstract(previous) && isAbstract(current));
+			return MAJOR.when(notNull(previous, current) && !isAbstract(previous) && !previous.isDefault() && isAbstract(current));
 		}
 	},
 	CHANGE_NON_FINAL_TO_FINAL {

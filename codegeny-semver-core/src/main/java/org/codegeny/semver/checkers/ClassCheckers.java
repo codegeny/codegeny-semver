@@ -2,10 +2,10 @@ package org.codegeny.semver.checkers;
 
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
-import static org.codegeny.semver.checkers.Access.PUBLIC;
 import static org.codegeny.semver.checkers.Checkers.enumConstants;
 import static org.codegeny.semver.checkers.Checkers.isAbstract;
 import static org.codegeny.semver.checkers.Checkers.isFinal;
+import static org.codegeny.semver.checkers.Checkers.isStatic;
 import static org.codegeny.semver.checkers.Checkers.notNull;
 import static org.codegeny.semver.checkers.Checkers.sameKind;
 
@@ -43,18 +43,18 @@ public enum ClassCheckers implements Checker<Class<?>> {
 			return MAJOR.when(notNull(previous, current) && Kind.of(previous) != Kind.of(current));
 		}
 	},
-	TYPE_CHANGE_NON_PUBLIC_TO_PUBLIC {
+	DECREASE_ACCESS {
 		
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MINOR.when(sameKind(previous, current) && Access.of(previous) != PUBLIC && Access.of(current) == PUBLIC);
+			return MAJOR.when(notNull(previous, current) && Access.of(current).isLesserThan(Access.of(previous)));
 		}
 	},
-	TYPE_CHANGE_PUBLIC_TO_NON_PUBLIC {
+	INCREASE_ACCESS {
 		
 		@Override
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-			return MAJOR.when(sameKind(previous, current) && Access.of(previous) == PUBLIC && Access.of(current) != PUBLIC);
+			return MINOR.when(notNull(previous, current) && Access.of(current).isGreaterThan(Access.of(previous)));
 		}
 	},
 	TYPE_CHANGE_NON_ABSTRACT_TO_ABSTRACT {
@@ -85,5 +85,33 @@ public enum ClassCheckers implements Checker<Class<?>> {
 		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
 			return MINOR.when(sameKind(previous, current) && isFinal(previous) && !isFinal(current));
 		}
-	}
+	},
+	CHANGE_STATIC_TO_NON_STATIC {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
+			return MAJOR.when(sameKind(previous, current) && isStatic(previous) && !isStatic(current));
+		}
+	},
+	CHANGE_NON_STATIC_TO_STATIC {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
+			return MAJOR.when(sameKind(previous, current) && !isStatic(previous) && isStatic(current));
+		}
+	},
+	DELETE_TYPE {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
+			return MAJOR.when(previous != null && current == null);
+		}
+	},
+	ADD_TYPE {
+		
+		@Override
+		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
+			return MINOR.when(previous == null && current != null);
+		}
+	},
 }

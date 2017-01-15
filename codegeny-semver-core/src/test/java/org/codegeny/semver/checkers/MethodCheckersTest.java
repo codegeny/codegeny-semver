@@ -5,8 +5,10 @@ import static org.codegeny.semver.checkers.MethodCheckers.ADD_ANNOTATION_ELEMENT
 import static org.codegeny.semver.checkers.MethodCheckers.ADD_DEFAULT_CLAUSE;
 import static org.codegeny.semver.checkers.MethodCheckers.ADD_NON_DEFAULT_METHOD_IMPLEMENTABLE_BY_CLIENT;
 import static org.codegeny.semver.checkers.MethodCheckers.ADD_STATIC_METHOD;
+import static org.codegeny.semver.checkers.MethodCheckers.CHANGE_ABSTRACT_TO_DEFAULT;
 import static org.codegeny.semver.checkers.MethodCheckers.CHANGE_ABSTRACT_TO_NON_ABSTRACT;
 import static org.codegeny.semver.checkers.MethodCheckers.CHANGE_DEFAULT_CLAUSE;
+import static org.codegeny.semver.checkers.MethodCheckers.CHANGE_DEFAULT_TO_ABSTRACT;
 import static org.codegeny.semver.checkers.MethodCheckers.CHANGE_NON_ABSTRACT_TO_ABSTRACT;
 import static org.codegeny.semver.checkers.MethodCheckers.CHANGE_RESULT_TYPE;
 import static org.codegeny.semver.checkers.MethodCheckers.REMOVE_DEFAULT_CLAUSE;
@@ -19,6 +21,18 @@ import java.util.List;
 import org.junit.runners.Parameterized.Parameters;
 
 public class MethodCheckersTest extends AbstractCheckersTest<Method, MethodCheckers> {
+
+	static abstract class TestClass1 {
+		
+		abstract int age();
+	}
+	
+	static abstract class TestClass2 {
+		
+		int age() {
+			return 0;
+		}
+	}
 	
 	interface TestType1 {
 		
@@ -179,8 +193,11 @@ public class MethodCheckersTest extends AbstractCheckersTest<Method, MethodCheck
 			
 			data(TestType1.class, TestType1.class),
 			
-			data(TestType1.class, TestType2.class, CHANGE_ABSTRACT_TO_NON_ABSTRACT),
-			data(TestType2.class, TestType1.class, CHANGE_NON_ABSTRACT_TO_ABSTRACT),
+			data(TestType1.class, TestType2.class, CHANGE_ABSTRACT_TO_DEFAULT),
+			data(TestType2.class, TestType1.class, CHANGE_DEFAULT_TO_ABSTRACT),
+
+			data(TestClass1.class, TestClass2.class, CHANGE_ABSTRACT_TO_NON_ABSTRACT),
+			data(TestClass2.class, TestClass1.class, CHANGE_NON_ABSTRACT_TO_ABSTRACT),
 			
 			data(null, TestType3.class, ADD_STATIC_METHOD), 
 			data(TestType1.class, TestType4.class, CHANGE_RESULT_TYPE),

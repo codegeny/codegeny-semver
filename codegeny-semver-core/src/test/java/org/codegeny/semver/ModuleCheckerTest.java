@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
@@ -19,34 +18,36 @@ import org.junit.rules.TemporaryFolder;
 public class ModuleCheckerTest {
 
 	@Rule
-	public final TemporaryFolder folder = new TemporaryFolder();
+	public final TemporaryFolder temp = new TemporaryFolder();
 
 	@Test
 	public void test() throws IOException {
 		
-		System.out.println(folder.getRoot());
-		
-		File file = folder.newFile("library.jar");
 		String name = DummyClass.class.getName().replace(".", "/").concat(".class");
 		
-		try (JarOutputStream output = new JarOutputStream(new FileOutputStream(file)); InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream(name)) {
+		File folder = temp.newFolder("library");
+		File jar = temp.newFile("library.jar");
+		File file = new File(folder, name);
+		file.getParentFile().mkdirs();
+		
+		try (
+				JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jar));
+				OutputStream fileOutput = new FileOutputStream(file);
+				InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream(name)) {
+			
 			ZipEntry zipEntry = new ZipEntry(name);
-			output.putNextEntry(zipEntry);
+			jarOutput.putNextEntry(zipEntry);
 			
 			byte[] bytes = new byte[1024];
 			for (int length; (length = input.read(bytes)) >= 0;) {
-				output.write(bytes, 0, length);
+				jarOutput.write(bytes, 0, length);
+				fileOutput.write(bytes, 0, length);
 			}
 			
-			output.closeEntry();
+			jarOutput.closeEntry();
 		}
-		
-		File file2 = folder.newFile("library2.jar");
-		try (OutputStream output = new FileOutputStream(file2)) {
-			Files.copy(file.toPath(), output);
-		}
-		
-		ModuleChecker.newConfiguredInstance().check(new Module(file), new Module(file2),  new Reporter() {
+				
+		ModuleChecker.newConfiguredInstance().check(new Module(jar), new Module(folder),  new Reporter() {
 			
 			@Override
 			public void report(Change change, String name, Method previous, Method current) {
