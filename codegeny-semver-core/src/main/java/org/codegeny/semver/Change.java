@@ -1,7 +1,6 @@
 package org.codegeny.semver;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public enum Change {
 
@@ -16,7 +15,7 @@ public enum Change {
 	}
 	
 	public Change combine(Change that) {
-		return that == null || compareTo(that) < 0 ? this : that;
+		return compareTo(that) < 0 ? this : that;
 	}
 	
 	public Version nextVersion(Version version) {
@@ -24,10 +23,6 @@ public enum Change {
 	}
 	
 	public Change when(boolean condition) {
-		return when(condition, () -> PATCH);
-	}
-	
-	public Change when(boolean condition, Supplier<Change> otherwise) {
-		return condition ? this : otherwise.get();
-	}
+		return condition ? this : PATCH;
+	}	
 }

@@ -182,6 +182,23 @@ public class MethodCheckersTest extends AbstractCheckersTest<Method, MethodCheck
 		
 		ONE, TWO
 	}
+	
+//	static class TestType50 {
+//		
+//		int age() {
+//			return 50;
+//		}
+//	}
+//	
+//	static class TestType51 {
+//		
+//		int age() {
+//			return 50;
+//		}
+//	}
+//	
+//	static class TestType52 extends TestType51 {		
+//	}
 		
 	@Parameters(name = "{0}")
 	public static Collection<?> parameters() {
@@ -217,9 +234,7 @@ public class MethodCheckersTest extends AbstractCheckersTest<Method, MethodCheck
 			TestType25.class, TestType26.class, TestType27.class, TestType28.class
 		);
 		
-		for (Class<?> p : classes) {
-			methods.add(data(p, p).toMethod());
-		}
+		classes.forEach(p -> methods.add(data(p, p).toMethod()));
 		
 		return methods;
 	}

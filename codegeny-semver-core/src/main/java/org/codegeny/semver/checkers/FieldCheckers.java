@@ -13,6 +13,7 @@ public enum FieldCheckers implements Checker<Field> {
 
 	CHANGE_TYPE {
 		
+		// TODO generic type?
 		@Override
 		public Change check(Field previous, Field current, Metadata metadata) {
 			return MAJOR.when(notNull(previous, current) && !previous.getType().getName().equals(current.getType().getName()));

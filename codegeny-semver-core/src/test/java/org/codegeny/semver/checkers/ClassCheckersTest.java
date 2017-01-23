@@ -1,17 +1,17 @@
 package org.codegeny.semver.checkers;
 
 import static org.codegeny.semver.checkers.ClassCheckers.ADD_TYPE;
+import static org.codegeny.semver.checkers.ClassCheckers.CHANGE_ABSTRACT_TO_NON_ABSTRACT;
+import static org.codegeny.semver.checkers.ClassCheckers.CHANGE_FINAL_TO_NON_FINAL;
+import static org.codegeny.semver.checkers.ClassCheckers.CHANGE_KIND;
+import static org.codegeny.semver.checkers.ClassCheckers.CHANGE_NON_ABSTRACT_TO_ABSTRACT;
+import static org.codegeny.semver.checkers.ClassCheckers.CHANGE_NON_FINAL_TO_FINAL;
 import static org.codegeny.semver.checkers.ClassCheckers.DECREASE_ACCESS;
 import static org.codegeny.semver.checkers.ClassCheckers.DELETE_TYPE;
-import static org.codegeny.semver.checkers.ClassCheckers.ENUM_ADD_CONSTANT;
-import static org.codegeny.semver.checkers.ClassCheckers.ENUM_DELETE_CONSTANT;
-import static org.codegeny.semver.checkers.ClassCheckers.ENUM_REORDER_CONSTANTS;
+import static org.codegeny.semver.checkers.ClassCheckers.ADD_ENUM_CONSTANT;
+import static org.codegeny.semver.checkers.ClassCheckers.DELETE_ENUM_CONSTANT;
+import static org.codegeny.semver.checkers.ClassCheckers.REORDER_ENUM_CONSTANTS;
 import static org.codegeny.semver.checkers.ClassCheckers.INCREASE_ACCESS;
-import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_ABSTRACT_TO_NON_ABSTRACT;
-import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_FINAL_TO_NON_FINAL;
-import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_KIND;
-import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_NON_ABSTRACT_TO_ABSTRACT;
-import static org.codegeny.semver.checkers.ClassCheckers.TYPE_CHANGE_NON_FINAL_TO_FINAL;
 
 import java.util.Collection;
 
@@ -53,34 +53,34 @@ public class ClassCheckersTest extends AbstractCheckersTest<Class<?>, ClassCheck
 			data(null, TestType1.class, ADD_TYPE),
 			data(TestType1.class, null, DELETE_TYPE),
 			data(TestType1.class, TestType1.class),
-			data(TestType1.class, TestType2.class, ENUM_ADD_CONSTANT), 
-			data(TestType2.class, TestType1.class, ENUM_DELETE_CONSTANT),
-			data(TestType2.class, TestType3.class, ENUM_REORDER_CONSTANTS),
+			data(TestType1.class, TestType2.class, ADD_ENUM_CONSTANT), 
+			data(TestType2.class, TestType1.class, DELETE_ENUM_CONSTANT),
+			data(TestType2.class, TestType3.class, REORDER_ENUM_CONSTANTS),
 			
-			data(TestType3.class, TestType4.class, TYPE_CHANGE_KIND),
-			data(TestType3.class, TestType5.class, TYPE_CHANGE_KIND),
-			data(TestType3.class, TestType6.class, TYPE_CHANGE_KIND),
+			data(TestType3.class, TestType4.class, CHANGE_KIND),
+			data(TestType3.class, TestType5.class, CHANGE_KIND),
+			data(TestType3.class, TestType6.class, CHANGE_KIND),
 			
-			data(TestType4.class, TestType3.class, TYPE_CHANGE_KIND),
-			data(TestType4.class, TestType5.class, TYPE_CHANGE_KIND),
-			data(TestType4.class, TestType6.class, TYPE_CHANGE_KIND),
+			data(TestType4.class, TestType3.class, CHANGE_KIND),
+			data(TestType4.class, TestType5.class, CHANGE_KIND),
+			data(TestType4.class, TestType6.class, CHANGE_KIND),
 
-			data(TestType5.class, TestType3.class, TYPE_CHANGE_KIND),
-			data(TestType5.class, TestType4.class, TYPE_CHANGE_KIND),
-			data(TestType5.class, TestType6.class, TYPE_CHANGE_KIND),
+			data(TestType5.class, TestType3.class, CHANGE_KIND),
+			data(TestType5.class, TestType4.class, CHANGE_KIND),
+			data(TestType5.class, TestType6.class, CHANGE_KIND),
 
-			data(TestType6.class, TestType3.class, TYPE_CHANGE_KIND),
-			data(TestType6.class, TestType4.class, TYPE_CHANGE_KIND),
-			data(TestType6.class, TestType5.class, TYPE_CHANGE_KIND),		
+			data(TestType6.class, TestType3.class, CHANGE_KIND),
+			data(TestType6.class, TestType4.class, CHANGE_KIND),
+			data(TestType6.class, TestType5.class, CHANGE_KIND),		
 
 			data(TestType5.class, TestType7.class, DECREASE_ACCESS),
 			data(TestType7.class, TestType5.class, INCREASE_ACCESS),
 			
-			data(TestType5.class, TestType8.class, TYPE_CHANGE_NON_ABSTRACT_TO_ABSTRACT),
-			data(TestType8.class, TestType5.class, TYPE_CHANGE_ABSTRACT_TO_NON_ABSTRACT),
+			data(TestType5.class, TestType8.class, CHANGE_NON_ABSTRACT_TO_ABSTRACT),
+			data(TestType8.class, TestType5.class, CHANGE_ABSTRACT_TO_NON_ABSTRACT),
 			
-			data(TestType5.class, TestType9.class, TYPE_CHANGE_NON_FINAL_TO_FINAL),
-			data(TestType9.class, TestType5.class, TYPE_CHANGE_FINAL_TO_NON_FINAL),
+			data(TestType5.class, TestType9.class, CHANGE_NON_FINAL_TO_FINAL),
+			data(TestType9.class, TestType5.class, CHANGE_FINAL_TO_NON_FINAL),
 			
 			data(TestType8.class, TestType8.class)
 		);

@@ -5,31 +5,31 @@ import java.lang.reflect.Method;
 
 public interface Metadata {
 	
-	boolean isImplementedByClient(Class<?> klass);
+	boolean isImplementableByClient(Class<?> klass);
 	
-	boolean isImplementedByClient(Method method);
+	boolean isImplementableByClient(Method method);
 	
-	boolean isPublicAPI(Class<?> klass);
+	boolean isUsableByClient(Class<?> klass);
 	
-	boolean isPublicAPI(Member member);
+	boolean isUsableByClient(Member member);
 	
 	default Metadata or(Metadata other) {
 		return new Metadata() {
 			
-			public boolean isImplementedByClient(Class<?> klass) {
-				return Metadata.this.isImplementedByClient(klass) || other.isImplementedByClient(klass);
+			public boolean isImplementableByClient(Class<?> klass) {
+				return Metadata.this.isImplementableByClient(klass) || other.isImplementableByClient(klass);
 			}
 			
-			public boolean isImplementedByClient(Method method) {
-				return Metadata.this.isImplementedByClient(method) || other.isImplementedByClient(method);
+			public boolean isImplementableByClient(Method method) {
+				return Metadata.this.isImplementableByClient(method) || other.isImplementableByClient(method);
 			}
 			
-			public boolean isPublicAPI(Class<?> klass) {
-				return Metadata.this.isPublicAPI(klass) || other.isPublicAPI(klass);
+			public boolean isUsableByClient(Class<?> klass) {
+				return Metadata.this.isUsableByClient(klass) || other.isUsableByClient(klass);
 			}
 			
-			public boolean isPublicAPI(Member member) {
-				return Metadata.this.isPublicAPI(member) || other.isPublicAPI(member);
+			public boolean isUsableByClient(Member member) {
+				return Metadata.this.isUsableByClient(member) || other.isUsableByClient(member);
 			}
 		};
 	}

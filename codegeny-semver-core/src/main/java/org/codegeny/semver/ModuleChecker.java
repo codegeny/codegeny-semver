@@ -1,8 +1,10 @@
 package org.codegeny.semver;
 
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.codegeny.semver.Change.PATCH;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,17 +19,19 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.codegeny.semver.checkers.Checkers;
 import org.codegeny.semver.checkers.ClassCheckers;
 import org.codegeny.semver.checkers.ConstructorCheckers;
 import org.codegeny.semver.checkers.ExecutableCheckers;
@@ -85,7 +89,7 @@ public class ModuleChecker {
 		commonArchives.retainAll(currentArchives);
 		
 		previousArchives.removeAll(commonArchives);
-		currentArchives.remove(commonArchives);
+		currentArchives.removeAll(commonArchives);
 				
 		try (
 				
@@ -93,38 +97,37 @@ public class ModuleChecker {
 			URLClassLoader previousLoader = newClassLoader(previousArchives, commonLoader);
 			URLClassLoader currentLoader = newClassLoader(currentArchives, commonLoader)) {
 			
-			Set<String> classNames = new HashSet<>();
-			classNames.addAll(previous.getClassNames());
-			classNames.addAll(current.getClassNames());
-	
-			Change globalResult = Change.PATCH;
+			Set<String> processedClassNames = new HashSet<>();
+			previous.getClassNames().forEach(processedClassNames::add);
+			current.getClassNames().forEach(processedClassNames::add);
+			Queue<String> classNamesToProcess = new LinkedList<>(processedClassNames);
 			
-			for (String className : classNames) {
+			Change globalResult = PATCH;
+			
+			while (!classNamesToProcess.isEmpty()) {
 				
-				Class<?> previousClass = getClass(className, previousLoader);
-				Class<?> currentClass = getClass(className, currentLoader);
+				String className = classNamesToProcess.remove();
 				
-				if (previousClass == null && currentClass == null) {
-					throw new RuntimeException("Could not load " + className + " at all!!!");
+				Optional<Class<?>> previousClass = getClass(className, previousLoader);
+				Optional<Class<?>> currentClass = getClass(className, currentLoader);
+				
+				if (Objects.equals(previousClass, currentClass)) { // common
+					continue;
 				}
 				
-//				if (previousClass == currentClass) { // common
-//					continue;
-//				}
+				globalResult = Stream.of(
+					check(previousClass, currentClass, classCheckers, metadata::isUsableByClient, reporter::report),
+					check(previousClass, currentClass, Class::getDeclaredFields, fieldCheckers, reporter, Field::getName),
+					checkMethods(previousClass, currentClass, methodCheckers, reporter),
+					check(previousClass, currentClass, Class::getDeclaredConstructors, constructorCheckers,reporter, this::key)
+				).reduce(globalResult, Change::combine);
 				
-				List<Supplier<Change>> checkers = new LinkedList<>();
-				checkers.add(() -> check(previousClass, currentClass, classCheckers, metadata::isPublicAPI, reporter::report));
-				checkers.add(() -> check(previousClass.getDeclaredFields(), currentClass.getDeclaredFields(), fieldCheckers, metadata::isPublicAPI, reporter::report, Field::getName));
-				checkers.add(() -> check(previousClass.getDeclaredMethods(), currentClass.getDeclaredMethods(), methodCheckers, metadata::isPublicAPI, reporter::report, this::key));
-				checkers.add(() -> check(previousClass.getDeclaredConstructors(), currentClass.getDeclaredConstructors(), constructorCheckers, metadata::isPublicAPI, reporter::report, this::key));
-				
-				Change classResult = combine(checkers);
-				
-				globalResult = globalResult.combine(classResult);
-				
-				if (globalResult == Change.MAJOR) {
-					break;
-				}
+				Stream.of(previousClass, currentClass)
+					.flatMap(o -> o.map(Checkers::extractTypesFromClass).orElseGet(Stream::empty))
+					.flatMap(Checkers::extractClasses)
+					.map(Class::getName)
+					.filter(n -> !processedClassNames.add(n))
+					.forEach(classNamesToProcess::add);
 			}
 			
 			return globalResult;
@@ -134,59 +137,53 @@ public class ModuleChecker {
 		}
 	}
 	
-	private <T> Change check(T previous, T current, Map<String, Checker<? super T>> checkers, Predicate<? super T> isPublicAPI, Report<T> report) {
-		Change result = Change.PATCH;
-		if (previous != null && !isPublicAPI.test(previous) && current != null && !isPublicAPI.test(current)) {
-			return result;
-		}
-		for (Map.Entry<String, Checker<? super T>> checker : checkers.entrySet()) {
-			Change change = checker.getValue().check(previous, current, metadata);
-			report.report(change, checker.getKey(), previous, current);
-			result = result.combine(change);
-//			if (result == Change.MAJOR) {
-//				break;
-//			}
-		}
-		return result;
+	private <T> Change check(Optional<T> previous, Optional<T> current, Map<String, Checker<? super T>> checkers, Predicate<? super T> isPublicAPI, Report<T> report) {
+		return !previous.filter(isPublicAPI).isPresent() && !current.filter(isPublicAPI).isPresent() ? PATCH : checkers.entrySet().stream().map(e -> {
+			Change change = e.getValue().check(previous.orElse(null), current.orElse(null), metadata);
+			report.report(change, e.getKey(), previous.orElse(null), current.orElse(null));
+			return change;
+		}).reduce(PATCH, Change::combine);
 	}
 	
-	private <T> Change check(T[] previouses, T[] currents, Map<String, Checker<? super T>> checkers, Predicate<? super T> isPublicAPI, Report<T> report, Function<? super T, ?> keyer) {
-		Map<Object, T> previousMap = Stream.of(previouses).collect(toMap(keyer, m -> m));
-		Map<Object, T> currentMap = Stream.of(currents).collect(toMap(keyer, m -> m));
-		Set<Object> keys = new HashSet<>();
-		keys.addAll(previousMap.keySet());
-		keys.addAll(currentMap.keySet());
-		Change result = Change.PATCH;
-		for (Object key : keys) {
-			T previous = previousMap.get(key);
-			T current = currentMap.get(key);
-			if (previous == current) {
-				continue;
-			}
-			result = result.combine(check(previous, current, checkers, isPublicAPI, report));
-//			if (result == Change.MAJOR) {
-//				break;
-//			}
-		}
-		return result;
+	private <T extends Member> Change check(Optional<Class<?>> previous, Optional<Class<?>> current, Function<Class<?>, T[]> extractor, Map<String, Checker<? super T>> checkers, Reporter reporter, Function<? super T, ?> keyer) {
+		Map<Object, T> previousMap = previous.map(extractor).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).collect(toMap(keyer, identity()));
+		Map<Object, T> currentMap = current.map(extractor).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).collect(toMap(keyer, identity()));
+		return Stream.concat(previousMap.keySet().stream(), currentMap.keySet().stream()).distinct().map(k -> {
+			Optional<T> p = Optional.ofNullable(previousMap.get(k));
+			Optional<T> c =  Optional.ofNullable(currentMap.get(k));
+			return previous.equals(current) ? PATCH : check(p, c, checkers, metadata::isUsableByClient, reporter::report);
+		}).reduce(PATCH, Change::combine);
 	}
 	
-	private Change combine(Iterable<Supplier<Change>> checkers) {
-		Change result = Change.PATCH;
-		for (Supplier<Change> checker : checkers) {
-			result = result.combine(checker.get());
-//			if (result == Change.MAJOR) {
-//				break;
-//			}
-		}
-		return result;
+	private Change checkMethods(Optional<Class<?>> previous, Optional<Class<?>> current, Map<String, Checker<? super Method>> checkers, Reporter reporter) {
+		Set<Object> previousMap = previous.map(Class::getDeclaredMethods).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).map(this::key).collect(toSet());
+		Set<Object> currentMap = current.map(Class::getDeclaredMethods).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).map(this::key).collect(toSet());
+		return Stream.concat(previousMap.stream(), currentMap.stream()).distinct().map(k -> {
+			Optional<Method> p = previous
+				.map(Checkers::hierarchy)
+				.orElseGet(Stream::empty)
+				.map(Class::getDeclaredMethods)
+				.flatMap(Stream::of)
+				.filter(m -> !m.isSynthetic())
+				.filter(m -> k.equals(key(m)))
+				.findFirst();
+			Optional<Method> c = current
+				.map(Checkers::hierarchy)
+				.orElseGet(Stream::empty)
+				.map(Class::getDeclaredMethods)
+				.flatMap(Stream::of)
+				.filter(m -> !m.isSynthetic())
+				.filter(m -> k.equals(key(m)))
+				.findFirst();
+			return previous.equals(current) ? PATCH : check(p, c, checkers, metadata::isUsableByClient, reporter::report);
+		}).reduce(PATCH, Change::combine);
 	}
-	
-	private Class<?> getClass(String className, ClassLoader classLoader) {
+
+	private Optional<Class<?>> getClass(String className, ClassLoader classLoader) {
 		try {
-			return classLoader.loadClass(className);
+			return Optional.of(classLoader.loadClass(className));
 		} catch (ClassNotFoundException classNotFoundException) {
-			return null;
+			return Optional.empty();
 		}
 	}
 	

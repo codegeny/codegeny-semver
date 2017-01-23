@@ -1,9 +1,7 @@
 package org.codegeny.semver.maven;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.Member;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -104,17 +102,7 @@ public class SemanticVersionMojo extends AbstractMojo {
 			Change change = moduleChangeChecker.check(previousModule, currentModule, new Reporter() {
 				
 				@Override
-				public void report(Change change, String name, Method previous, Method current) {
-					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
-				}
-				
-				@Override
-				public void report(Change change, String name, Field previous, Field current) {
-					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
-				}
-				
-				@Override
-				public void report(Change change, String name, Constructor<?> previous, Constructor<?> current) {
+				public <M extends Member> void report(Change change, String name, M previous, M current) {
 					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
 				}
 				
