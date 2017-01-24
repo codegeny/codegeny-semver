@@ -20,7 +20,6 @@ import java.net.URLClassLoader;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.ServiceLoader;
@@ -46,14 +45,18 @@ public class ModuleChecker {
 		
 		void report(Change change, String name, T previous, T current);
 	}
-				
+	
 	public static ModuleChecker newConfiguredInstance() {
+		return newConfiguredInstance(Thread.currentThread().getContextClassLoader());
+	}
+				
+	public static ModuleChecker newConfiguredInstance(ClassLoader parentClassLoader) {
 		
 		Set<Metadata> metaSet = new HashSet<>();
 		ServiceLoader.load(Metadata.class).forEach(metaSet::add);
 		Metadata metadata = metaSet.stream().reduce(Metadata::or).orElseGet(DefaultMetadata::new);
 		
-		ModuleChecker moduleChangeChecker = new ModuleChecker(metadata);
+		ModuleChecker moduleChangeChecker = new ModuleChecker(metadata, parentClassLoader);
 		
 		register(ClassCheckers.class, moduleChangeChecker::registerClassChecker);
 		register(ConstructorCheckers.class, moduleChangeChecker::registerConstructorChecker);
@@ -75,31 +78,30 @@ public class ModuleChecker {
 	private final Map<String, Checker<? super Field>> fieldCheckers = new TreeMap<>();
 	private final Map<String, Checker<? super Method>> methodCheckers = new TreeMap<>();
 	private final Metadata metadata;
+	private final ClassLoader parentClassLoader;
 
-	public ModuleChecker(Metadata metadata) {
+	public ModuleChecker(Metadata metadata, ClassLoader parentClassLoader) {
 		this.metadata = metadata;
+		this.parentClassLoader = parentClassLoader;
 	}
 
 	public Change check(Module previous, Module current, Reporter reporter) {
 		
 		Set<URL> previousArchives = toURLs(previous.getClassPath());
 		Set<URL> currentArchives = toURLs(current.getClassPath());
-		
 		Set<URL> commonArchives = new HashSet<>(previousArchives);
 		commonArchives.retainAll(currentArchives);
-		
-		previousArchives.removeAll(commonArchives);
 		currentArchives.removeAll(commonArchives);
+		previousArchives.removeAll(commonArchives);
 				
 		try (
 				
-			URLClassLoader commonLoader = newClassLoader(commonArchives, Thread.currentThread().getContextClassLoader());
+			URLClassLoader commonLoader = newClassLoader(commonArchives, this.parentClassLoader);
 			URLClassLoader previousLoader = newClassLoader(previousArchives, commonLoader);
 			URLClassLoader currentLoader = newClassLoader(currentArchives, commonLoader)) {
 			
-			Set<String> processedClassNames = new HashSet<>();
-			previous.getClassNames().forEach(processedClassNames::add);
-			current.getClassNames().forEach(processedClassNames::add);
+			Set<String> processedClassNames = new HashSet<>(previous.getClassNames());
+			processedClassNames.addAll(current.getClassNames());
 			Queue<String> classNamesToProcess = new LinkedList<>(processedClassNames);
 			
 			Change globalResult = PATCH;
@@ -111,7 +113,7 @@ public class ModuleChecker {
 				Optional<Class<?>> previousClass = getClass(className, previousLoader);
 				Optional<Class<?>> currentClass = getClass(className, currentLoader);
 				
-				if (Objects.equals(previousClass, currentClass)) { // common
+				if (previousClass.equals(currentClass)) {
 					continue;
 				}
 				
@@ -164,16 +166,14 @@ public class ModuleChecker {
 				.orElseGet(Stream::empty)
 				.map(Class::getDeclaredMethods)
 				.flatMap(Stream::of)
-				.filter(m -> !m.isSynthetic())
-				.filter(m -> k.equals(key(m)))
+				.filter(m -> !m.isSynthetic() && k.equals(key(m)))
 				.findFirst();
 			Optional<Method> c = current
 				.map(Checkers::hierarchy)
 				.orElseGet(Stream::empty)
 				.map(Class::getDeclaredMethods)
 				.flatMap(Stream::of)
-				.filter(m -> !m.isSynthetic())
-				.filter(m -> k.equals(key(m)))
+				.filter(m -> !m.isSynthetic() && k.equals(key(m)))
 				.findFirst();
 			return previous.equals(current) ? PATCH : check(p, c, checkers, metadata::isUsableByClient, reporter::report);
 		}).reduce(PATCH, Change::combine);

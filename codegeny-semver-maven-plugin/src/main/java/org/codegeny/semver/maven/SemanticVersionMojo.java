@@ -102,7 +102,7 @@ public class SemanticVersionMojo extends AbstractMojo {
 			Change change = moduleChangeChecker.check(previousModule, currentModule, new Reporter() {
 				
 				@Override
-				public <M extends Member> void report(Change change, String name, M previous, M current) {
+				public void report(Change change, String name, Member previous, Member current) {
 					getLog().info(String.format("%s :: %s :: %s - %s", change, name, previous, current));
 				}
 				

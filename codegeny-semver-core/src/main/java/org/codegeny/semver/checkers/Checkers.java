@@ -33,6 +33,12 @@ import java.util.stream.Stream;
 
 public class Checkers {
 	
+	private static final Comparator<Class<?>> CLASS_HIERARCHY_COMPARATOR = (a, b) -> a.isAssignableFrom(b)
+		? b.isAssignableFrom(a) ? 0 : +1
+		: b.isAssignableFrom(a) ? -1 : a.isInterface()
+			? b.isInterface() ? 0 : +1
+			: b.isInterface() ? -1 : a.getName().compareTo(b.getName());
+	
 	static boolean compare(Object previous, Object current) {
 		if (previous instanceof Enum<?> && current instanceof Enum<?>) {
 			return compareEnum((Enum<?>) previous, (Enum<?>) current);
@@ -93,17 +99,7 @@ public class Checkers {
 		}
 		return true;
 	}
-	
-	private static final Comparator<Class<?>> CLASS_HIERARCHY_COMPARATOR = (a, b) -> a.isAssignableFrom(b)
-		? b.isAssignableFrom(a) ? 0 : +1
-		: b.isAssignableFrom(a) ? -1 : a.isInterface()
-			? b.isInterface() ? 0 : +1
-			: b.isInterface() ? -1 : a.getName().compareTo(b.getName());
 		
-	public static Stream<Class<?>> hierarchy(Class<?> klass) {
-		return klass == null ? Stream.empty() : Stream.concat(Stream.of(klass), Stream.concat(hierarchy(klass.getSuperclass()), Stream.of(klass.getInterfaces()).flatMap(Checkers::hierarchy))).distinct().sorted(CLASS_HIERARCHY_COMPARATOR);
-	}
-	
 	private static boolean compareArray(Object[] previous, Object[] current) {
 		return previous.length == current.length && IntStream.range(0, previous.length).allMatch(i -> compare(previous[i], current[i]));		
 	}
@@ -130,7 +126,7 @@ public class Checkers {
 	private static boolean compareParameterizedType(ParameterizedType left, ParameterizedType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		return compareType(left.getRawType(), right.getRawType(), variables) && compareType(left.getOwnerType(), right.getOwnerType(), variables) && compareTypes(left.getActualTypeArguments(), right.getActualTypeArguments(), variables);
 	}
-
+	
 	// TODO optimize later
 	static <T> boolean compareSet(Set<? extends T> previous, Set<? extends T> current, BiPredicate<? super T, ? super T> predicate) {
 		return previous.stream().allMatch(a -> current.stream().anyMatch(b -> predicate.test(a, b))) && current.stream().allMatch(a -> previous.stream().anyMatch(b -> predicate.test(a, b)));
@@ -139,12 +135,7 @@ public class Checkers {
 	static boolean compareType(Type left, Type right) {
 		return compareType(left, right, new HashMap<>());
 	}
-	
-//	static Comparator<Type> newTypeComparator() {
-//		Map<TypeVariable<?>, TypeVariable<?>> variables = new HashMap<>();
-//		return (a, b) -> compareType(a, b, variables) ? 0 : -1;
-//	}
-	
+
 	private static boolean compareType(Type left, Type right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		if (left instanceof Class<?> && right instanceof Class<?>) {
 			return compareClass((Class<?>) left, (Class<?>) right);
@@ -164,39 +155,45 @@ public class Checkers {
 		return left == right;
 	}
 	
+//	static Comparator<Type> newTypeComparator() {
+//		Map<TypeVariable<?>, TypeVariable<?>> variables = new HashMap<>();
+//		return (a, b) -> compareType(a, b, variables) ? 0 : -1;
+//	}
+	
+	static boolean compareTypes(Type[] left, Type[] right) {
+		return compareTypes(left, right, new HashMap<>());
+	}
+	
+	private static boolean compareTypes(Type[] left, Type[] right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+		return left.length == right.length && IntStream.range(0, left.length).allMatch(i -> compareType(left[i], right[i], variables));
+	}
+	
+	// TODO still not sure about this
+	private static boolean compareTypeVariable(TypeVariable<?> left, TypeVariable<?> right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+		if (position(left) == position(right) && compareGenericDeclaration(left.getGenericDeclaration(), right.getGenericDeclaration())) {
+			if (variables.containsKey(left)) {
+				return variables.get(left).equals(right);
+			}
+			variables.put(left, right);
+			return compareTypes(left.getBounds(), right.getBounds(), variables);
+		}
+		return false;
+	}
+	
+	private static boolean compareWildcardType(WildcardType left, WildcardType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
+		return compareTypes(left.getLowerBounds(), right.getLowerBounds(), variables) && compareTypes(left.getUpperBounds(), right.getUpperBounds(), variables);
+	}
+	
+	static boolean enumConstants(Class<?> previous, Class<?> current, BiPredicate<? super List<String>, ? super List<String>> predicate) {
+		return notNull(previous, current) && previous.isEnum() && current.isEnum() && predicate.test(enumConstantsOf(previous), enumConstantsOf(current));
+	}
+	
+	static List<String> enumConstantsOf(Class<?> klass) {
+		return Stream.of(klass.asSubclass(Enum.class).getEnumConstants()).map(Enum::name).collect(toList());
+	}
+	
 	public static Stream<Class<?>> extractClasses(Type type) {
 		return extractClasses(type, new HashSet<>());
-	}
-	
-	public static Stream<Type> extractTypesFromClass(Class<?> klass) {
-		return Stream.of(
-			extractTypesFromGenericDeclaration(klass),
-			Stream.of(klass.getGenericSuperclass()),
-			Stream.of(klass.getGenericInterfaces()),
-			Stream.of(klass.getDeclaredConstructors()).flatMap(Checkers::extractTypesFromConstructor),
-			Stream.of(klass.getDeclaredFields()).flatMap(Checkers::extractTypesFromField),
-			Stream.of(klass.getDeclaredMethods()).flatMap(Checkers::extractTypesFromMethod)
-		).reduce(Stream::concat).orElseGet(Stream::empty).filter(Objects::nonNull);
-	}
-	
-	public static Stream<Type> extractTypesFromField(Field field) {
-		return Stream.of(field.getGenericType());
-	}
-	
-	public static Stream<Type> extractTypesFromConstructor(Constructor<?> constructor) {
-		return extractTypesFromExecutable(constructor);
-	}
-	
-	public static Stream<Type> extractTypesFromMethod(Method method) {
-		return Stream.concat(extractTypesFromExecutable(method), Stream.of(method.getGenericReturnType()));
-	}
-	
-	private static Stream<Type> extractTypesFromExecutable(Executable executable) {
-		return Stream.concat(Stream.concat(extractTypesFromGenericDeclaration(executable), Stream.of(executable.getGenericParameterTypes())), Stream.of(executable.getGenericExceptionTypes()));
-	}
-	
-	private static Stream<Type> extractTypesFromGenericDeclaration(GenericDeclaration genericDeclaration) {
-		return Stream.of(genericDeclaration.getTypeParameters());
 	}
 	
 	private static Stream<Class<?>> extractClasses(Type type, Set<TypeVariable<?>> variables) {
@@ -233,36 +230,35 @@ public class Checkers {
 		return Stream.empty();
 	}
 	
-	static boolean compareTypes(Type[] left, Type[] right) {
-		return compareTypes(left, right, new HashMap<>());
+	public static Stream<Type> extractTypesFromClass(Class<?> klass) {
+		return Stream.of(
+			extractTypesFromGenericDeclaration(klass),
+			Stream.of(klass.getGenericSuperclass()),
+			Stream.of(klass.getGenericInterfaces()),
+			Stream.of(klass.getDeclaredConstructors()).flatMap(Checkers::extractTypesFromConstructor),
+			Stream.of(klass.getDeclaredFields()).flatMap(Checkers::extractTypesFromField),
+			Stream.of(klass.getDeclaredMethods()).flatMap(Checkers::extractTypesFromMethod)
+		).reduce(Stream::concat).orElseGet(Stream::empty).filter(Objects::nonNull);
 	}
 	
-	private static boolean compareTypes(Type[] left, Type[] right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
-		return left.length == right.length && IntStream.range(0, left.length).allMatch(i -> compareType(left[i], right[i], variables));
+	public static Stream<Type> extractTypesFromConstructor(Constructor<?> constructor) {
+		return extractTypesFromExecutable(constructor);
 	}
 	
-	// TODO still not sure about this
-	private static boolean compareTypeVariable(TypeVariable<?> left, TypeVariable<?> right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
-		if (position(left) == position(right) && compareGenericDeclaration(left.getGenericDeclaration(), right.getGenericDeclaration())) {
-			if (variables.containsKey(left)) {
-				return variables.get(left).equals(right);
-			}
-			variables.put(left, right);
-			return compareTypes(left.getBounds(), right.getBounds(), variables);
-		}
-		return false;
+	private static Stream<Type> extractTypesFromExecutable(Executable executable) {
+		return Stream.concat(Stream.concat(extractTypesFromGenericDeclaration(executable), Stream.of(executable.getGenericParameterTypes())), Stream.of(executable.getGenericExceptionTypes()));
 	}
 	
-	private static boolean compareWildcardType(WildcardType left, WildcardType right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
-		return compareTypes(left.getLowerBounds(), right.getLowerBounds(), variables) && compareTypes(left.getUpperBounds(), right.getUpperBounds(), variables);
+	public static Stream<Type> extractTypesFromField(Field field) {
+		return Stream.of(field.getGenericType());
 	}
 	
-	static boolean enumConstants(Class<?> previous, Class<?> current, BiPredicate<? super List<String>, ? super List<String>> predicate) {
-		return notNull(previous, current) && previous.isEnum() && current.isEnum() && predicate.test(enumConstantsOf(previous), enumConstantsOf(current));
+	private static Stream<Type> extractTypesFromGenericDeclaration(GenericDeclaration genericDeclaration) {
+		return Stream.of(genericDeclaration.getTypeParameters());
 	}
 	
-	static List<String> enumConstantsOf(Class<?> klass) {
-		return Stream.of(klass.asSubclass(Enum.class).getEnumConstants()).map(Enum::name).collect(toList());
+	public static Stream<Type> extractTypesFromMethod(Method method) {
+		return Stream.concat(extractTypesFromExecutable(method), Stream.of(method.getGenericReturnType()));
 	}
 	
 	static boolean fromAnnotations(Method previous, Method current) {
@@ -271,6 +267,10 @@ public class Checkers {
 	
 	static Set<String> getCheckedExceptionClassNames(Executable executable) {
 		return Stream.of(executable.getExceptionTypes()).<Class<? extends Throwable>> map(c -> c.asSubclass(Throwable.class)).filter(Checkers::isChecked).map(Class::getName).collect(toSet());
+	}
+	
+	public static Stream<Class<?>> hierarchy(Class<?> klass) {
+		return klass == null ? Stream.empty() : Stream.concat(Stream.of(klass), Stream.concat(hierarchy(klass.getSuperclass()), Stream.of(klass.getInterfaces()).flatMap(Checkers::hierarchy))).distinct().sorted(CLASS_HIERARCHY_COMPARATOR);
 	}
 		
 //	static Set<Class<?>> getSuperTypes(Class<?> type, Function<Class<?>, Stream<Class<?>>> extractor) {
@@ -329,11 +329,11 @@ public class Checkers {
 		return Arrays.asList(typeVariable.getGenericDeclaration().getTypeParameters()).indexOf(typeVariable);
 	}
 	
-	static boolean sameKind(Class<?> previous, Class<?> current) {
-		return notNull(previous, current) && Kind.of(previous) == Kind.of(current);
-	}
-	
 	static <T> boolean present(Optional<T> previous, Optional<T> current, BiPredicate<T, T> predicate) {
 		return previous.flatMap(p -> current.map(c -> predicate.test(p, c))).orElse(Boolean.FALSE);
+	}
+	
+	static boolean sameKind(Class<?> previous, Class<?> current) {
+		return notNull(previous, current) && Kind.of(previous) == Kind.of(current);
 	}
 }

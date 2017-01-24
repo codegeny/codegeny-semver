@@ -1,4 +1,4 @@
-package org.codegeny.semver;
+package org.codegeny.semver.classes2;
 
 public class DummyClass {
 	
@@ -8,5 +8,5 @@ public class DummyClass {
 	
 	public int field;
 	
-	public void someMethod(int param) {}
+	public void someMethod(int param) throws Exception {}
 }

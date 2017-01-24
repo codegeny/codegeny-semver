@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,10 +28,10 @@ public class Module {
 		return file.isFile() ? Stream.of(file) : Stream.of(file.listFiles()).flatMap(this::accept);
 	}
 
-	public Set<String> getClassNames() {
+	public Set<String> getClassNames() throws IOException {
 		return getResourceNames().stream()
 			.filter(f -> CLASS_PATTERN.matcher(f).matches())
-			.map(f -> f.substring(0, f.length() - ".class".length()).replace('/', '.'))
+			.map(f -> f.replace(".class", "").replace('/', '.'))
 			.collect(toSet());
 	}
 	
@@ -40,12 +39,10 @@ public class Module {
 		return Stream.concat(Stream.of(main), dependencies.stream()).collect(toSet());
 	}
 	
-	public Set<String> getResourceNames() {
+	public Set<String> getResourceNames() throws IOException {
 		if (main.isFile()) {
 			try (JarFile jar = new JarFile(main)) {
 				return jar.stream().map(JarEntry::getName).collect(toSet());
-			} catch (IOException ioException) {
-				throw new UncheckedIOException(String.format("Error while reading JAR file '%s'", main), ioException);
 			}
 		} else {
 			return accept(main).map(f -> main.toPath().relativize(f.toPath()).toString()).collect(toSet());

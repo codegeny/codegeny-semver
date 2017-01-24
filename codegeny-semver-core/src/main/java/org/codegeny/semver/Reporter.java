@@ -6,8 +6,7 @@ public interface Reporter {
 
 	void report(Change change, String name, Class<?> previous, Class<?> current);
 
-	 <M extends Member> void report(Change change, String name, M previous, M current);
-
+	void report(Change change, String name, Member previous, Member current);
 	
 	static Reporter noop() {
 		return new Reporter() {
@@ -16,7 +15,7 @@ public interface Reporter {
 			public void report(Change change, String name, Class<?> previous, Class<?> current) {}
 
 			@Override
-			public <M extends Member> void report(Change change, String name, M previous, M current) {}
+			public void report(Change change, String name, Member previous, Member current) {}
 		};
 	}
 }
