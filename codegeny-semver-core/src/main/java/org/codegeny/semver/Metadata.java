@@ -5,9 +5,9 @@ import java.lang.reflect.Method;
 
 public interface Metadata {
 	
-	boolean isImplementableByClient(Class<?> klass);
+	boolean needsImplementationByClient(Class<?> klass);
 	
-	boolean isImplementableByClient(Method method);
+	boolean needsImplementationByClient(Method method);
 	
 	boolean isUsableByClient(Class<?> klass);
 	
@@ -16,12 +16,12 @@ public interface Metadata {
 	default Metadata or(Metadata other) {
 		return new Metadata() {
 			
-			public boolean isImplementableByClient(Class<?> klass) {
-				return Metadata.this.isImplementableByClient(klass) || other.isImplementableByClient(klass);
+			public boolean needsImplementationByClient(Class<?> klass) {
+				return Metadata.this.needsImplementationByClient(klass) || other.needsImplementationByClient(klass);
 			}
 			
-			public boolean isImplementableByClient(Method method) {
-				return Metadata.this.isImplementableByClient(method) || other.isImplementableByClient(method);
+			public boolean needsImplementationByClient(Method method) {
+				return Metadata.this.needsImplementationByClient(method) || other.needsImplementationByClient(method);
 			}
 			
 			public boolean isUsableByClient(Class<?> klass) {

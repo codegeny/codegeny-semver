@@ -9,7 +9,7 @@ import org.codegeny.semver.Metadata;
 public class PublicAPIMetadata implements Metadata {
 
 	@Override
-	public boolean isImplementableByClient(Class<?> klass) {
+	public boolean needsImplementationByClient(Class<?> klass) {
 		PublicAPI publicAPI = klass.getAnnotation(PublicAPI.class);
 		if (publicAPI != null) {
 			return !publicAPI.internal();
@@ -22,7 +22,7 @@ public class PublicAPIMetadata implements Metadata {
 	}
 
 	@Override
-	public boolean isImplementableByClient(Method method) {
+	public boolean needsImplementationByClient(Method method) {
 		PublicAPI publicAPI = method.getAnnotation(PublicAPI.class);
 		if (publicAPI != null) {
 			return !publicAPI.internal();

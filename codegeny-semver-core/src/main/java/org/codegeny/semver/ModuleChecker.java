@@ -110,6 +110,8 @@ public class ModuleChecker {
 				
 				String className = classNamesToProcess.remove();
 				
+//				System.out.printf("------------%s-----------%n", className);
+				
 				Optional<Class<?>> previousClass = getClass(className, previousLoader);
 				Optional<Class<?>> currentClass = getClass(className, currentLoader);
 				
@@ -128,7 +130,7 @@ public class ModuleChecker {
 					.flatMap(o -> o.map(Checkers::extractTypesFromClass).orElseGet(Stream::empty))
 					.flatMap(Checkers::extractClasses)
 					.map(Class::getName)
-					.filter(n -> !processedClassNames.add(n))
+					.filter(processedClassNames::add)
 					.forEach(classNamesToProcess::add);
 			}
 			

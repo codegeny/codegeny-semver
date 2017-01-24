@@ -18,44 +18,45 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class ModuleCheckerTest {
-	
-	static class ReplacingOutputStream extends FilterOutputStream {
 		
-		private final byte[] match;
-		private final byte[] replace;
+	private static class ReplacingOutputStream extends FilterOutputStream {
+		
 		private int matched;
+		private final byte[] replacement;
+		private final byte[] target;
 		
-		public ReplacingOutputStream(OutputStream out, byte[] match, byte[] replace) {
+		public ReplacingOutputStream(OutputStream out, byte[] target, byte[] replacement) {
 			super(out);
-			this.match = match;
-			this.replace = replace;
+			this.target = target;
+			this.replacement = replacement;
 		}
 		
 		@Override
+		public void close() throws IOException {
+			for (int i = 0; i < matched; i++) {
+				super.write(target[i]);
+			}
+			matched = 0; // just in case close() is called more than once
+			super.close();
+		}
+
+		@Override
 		public void write(int b) throws IOException {
-			if (match[matched] == b) {
+			if (target[matched] == b) {
 				matched++;
-				if (matched == match.length) {
-					for (int i = 0; i < replace.length; i++) {
-						super.write(replace[i]);
+				if (matched == target.length) {
+					for (int i = 0; i < replacement.length; i++) {
+						super.write(replacement[i]);
 					}
 					matched = 0;
 				}
 			} else {
 				for (int i = 0; i < matched; i++) {
-					super.write(match[i]);
+					super.write(target[i]);
 				}
 				matched = 0;
 				super.write(b);
 			}
-		}
-
-		@Override
-		public void close() throws IOException {
-			for (int i = 0; i < matched; i++) {
-				super.write(match[i]);
-			}
-			super.close();
 		}
 	}
 	
@@ -86,6 +87,35 @@ public class ModuleCheckerTest {
 		return new File(temp.getRoot(), name);
 	}
 	
+	@Test
+	public void test() throws Exception {
+		
+		File source1 = shade("classes1");
+		File source2 = shade("classes2");
+		File zipFile = temp.newFile("classes2.jar");
+		
+		try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(zipFile))) {
+			zip(source2, source2, zip);
+		}
+
+		Assert.assertEquals(Change.MAJOR, ModuleChecker.newConfiguredInstance().check(new Module(source1), new Module(zipFile), Reporter.noop().and(new Reporter() {
+			
+			@Override
+			public void report(Change change, String name, Member previous, Member current) {
+				if (change != Change.PATCH) {
+					System.out.printf("%s :: %s :: %s - %s%n", change, name, previous, current);
+				}
+			}
+			
+			@Override
+			public void report(Change change, String name, Class<?> previous, Class<?> current) {
+				if (change != Change.PATCH) {
+					System.out.printf("%s :: %s :: %s - %s%n", change, name, previous, current);
+				}
+			}
+		})));
+	}
+
 	private void zip(File root, File source, ZipOutputStream zip) throws IOException {
 		if (source.isFile()) {
 			String name = root.toURI().relativize(source.toURI()).toString();
@@ -102,34 +132,5 @@ public class ModuleCheckerTest {
 				zip(root, file, zip);
 			}
 		}
-	}
-
-	@Test
-	public void test() throws Exception {
-		
-		File source1 = shade("classes1");
-		File source2 = shade("classes2");
-		File zipFile = temp.newFile("classes2.jar");
-		
-		try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(zipFile))) {
-			zip(source2, source2, zip);
-		}
-
-		Assert.assertEquals(Change.MAJOR, ModuleChecker.newConfiguredInstance().check(new Module(source1), new Module(zipFile), new Reporter() {
-			
-			@Override
-			public void report(Change change, String name, Member previous, Member current) {
-				if (change != Change.PATCH) {
-					System.out.printf("%s :: %s :: %s - %s%n", change, name, previous, current);
-				}
-			}
-			
-			@Override
-			public void report(Change change, String name, Class<?> previous, Class<?> current) {
-				if (change != Change.PATCH) {
-					System.out.printf("%s :: %s :: %s - %s%n", change, name, previous, current);
-				}
-			}
-		}));
 	}
 }

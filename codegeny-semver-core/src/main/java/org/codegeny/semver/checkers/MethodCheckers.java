@@ -44,28 +44,28 @@ public enum MethodCheckers implements Checker<Method> {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(previous == null && current != null && current.isDefault() && metadata.isImplementableByClient(current.getDeclaringClass()));
+			return MAJOR.when(previous == null && current != null && current.isDefault() && metadata.needsImplementationByClient(current.getDeclaringClass()));
 		}
 	},
 	ADD_DEFAULT_METHOD_NOT_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(previous == null && current != null && current.isDefault() && !metadata.isImplementableByClient(current.getDeclaringClass()));
+			return MINOR.when(previous == null && current != null && current.isDefault() && !metadata.needsImplementationByClient(current.getDeclaringClass()));
 		}
 	},
 	ADD_NON_DEFAULT_METHOD_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && metadata.isImplementableByClient(current));
+			return MAJOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && metadata.needsImplementationByClient(current));
 		}
 	},
 	ADD_NON_DEFAULT_METHOD_NOT_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && !metadata.isImplementableByClient(current));
+			return MINOR.when(previous == null && current != null && !current.getDeclaringClass().isAnnotation() && !current.isDefault() && !isStatic(current) && !metadata.needsImplementationByClient(current));
 		}
 	},
 	ADD_STATIC_METHOD {
@@ -136,21 +136,21 @@ public enum MethodCheckers implements Checker<Method> {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && hierarchy(current.getDeclaringClass()).skip(1).map(Class::getName).anyMatch(isEqual(previous.getName())));
+			return MAJOR.when(notNull(previous, current) && hierarchy(current.getDeclaringClass()).skip(1).map(Class::getName).anyMatch(isEqual(previous.getDeclaringClass().getName())));
 		}
 	},
 	MOVE_UP_IN_HIERARCHY_IF_METHOD_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MAJOR.when(notNull(previous, current) && metadata.isImplementableByClient(current) && hierarchy(previous.getDeclaringClass()).skip(1).map(Class::getName).anyMatch(isEqual(current.getName())));
+			return MAJOR.when(notNull(previous, current) && metadata.needsImplementationByClient(current) && hierarchy(previous.getDeclaringClass()).skip(1).map(Class::getName).anyMatch(isEqual(current.getDeclaringClass().getName())));
 		}
 	},
 	MOVE_UP_IN_HIERARCHY_IF_METHOD_NOT_IMPLEMENTABLE_BY_CLIENT {
 		
 		@Override
 		public Change check(Method previous, Method current, Metadata metadata) {
-			return MINOR.when(notNull(previous, current) && !metadata.isImplementableByClient(current) && hierarchy(previous.getDeclaringClass()).skip(1).map(Class::getName).anyMatch(isEqual(current.getName())));
+			return MINOR.when(notNull(previous, current) && !metadata.needsImplementationByClient(current) && hierarchy(previous.getDeclaringClass()).skip(1).map(Class::getName).anyMatch(isEqual(current.getDeclaringClass().getName())));
 		}
 	},
 	REMOVE_DEFAULT_CLAUSE {
