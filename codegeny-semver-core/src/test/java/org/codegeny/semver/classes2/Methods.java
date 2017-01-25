@@ -1,5 +1,8 @@
 package org.codegeny.semver.classes2;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
 import org.codegeny.semver.classes2.Methods.UltimateAnnotation.Color;
 
 public abstract class Methods {
@@ -34,6 +37,8 @@ public abstract class Methods {
 			
 			Color enumValue();
 			
+			Target annotationValue();
+			
 			boolean[] booleanArray();
 			
 			byte[] byteArray();
@@ -55,6 +60,8 @@ public abstract class Methods {
 			String[] stringArray();
 			
 			Color[] enumArray();
+			
+			Target[] annotationArray();
 	}
 	
 	@interface Annotation {
@@ -89,7 +96,36 @@ public abstract class Methods {
 				shortArray = 1,
 				shortValue = 1,
 				stringArray = "a",
-				stringValue = "b"
+				stringValue = "b",
+				annotationValue = @Target(ElementType.TYPE),
+				annotationArray = @Target(ElementType.TYPE)
+		);
+		
+		UltimateAnnotation dontChangeDefaultClause() default @UltimateAnnotation(
+				booleanArray = true,
+				booleanValue = true,
+				byteArray = 1,
+				byteValue = 1,
+				charArray = 'a',
+				charValue = 'b',
+				classArray = Long.class,
+				classValue = Long.class,
+				doubleArray = 1,
+				doubleValue = 1,
+				enumArray = Color.BLUE,
+				enumValue = Color.BLUE,
+				floatArray = 1,
+				floatValue = 1,
+				intArray = 1,
+				intValue = 1,
+				longArray = 1,
+				longValue = 1,
+				shortArray = 1,
+				shortValue = 1,
+				stringArray = "a",
+				stringValue = "a",
+				annotationValue = @Target(ElementType.TYPE),
+				annotationArray = @Target(ElementType.TYPE)
 		);
 	}
 	

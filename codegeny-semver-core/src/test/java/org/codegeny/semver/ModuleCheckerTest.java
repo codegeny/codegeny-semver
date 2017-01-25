@@ -1,5 +1,8 @@
 package org.codegeny.semver;
 
+import static org.codegeny.semver.ModuleChecker.newConfiguredInstance;
+import static org.codegeny.semver.Reporter.noop;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,6 +10,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Member;
 import java.util.function.UnaryOperator;
 import java.util.zip.ZipEntry;
@@ -114,6 +118,11 @@ public class ModuleCheckerTest {
 				}
 			}
 		})));
+	}
+	
+	@Test(expected = UncheckedIOException.class)
+	public void testWithException() throws Exception {
+		newConfiguredInstance().check(new Module(temp.newFile("empty1.jar")), new Module(temp.newFile("empty2.jar")), noop());
 	}
 
 	private void zip(File root, File source, ZipOutputStream zip) throws IOException {

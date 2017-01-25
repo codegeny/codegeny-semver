@@ -87,51 +87,52 @@ public class ModuleChecker {
 
 	public Change check(Module previous, Module current, Reporter reporter) {
 		
-		Set<URL> previousArchives = toURLs(previous.getClassPath());
-		Set<URL> currentArchives = toURLs(current.getClassPath());
-		Set<URL> commonArchives = new HashSet<>(previousArchives);
-		commonArchives.retainAll(currentArchives);
-		currentArchives.removeAll(commonArchives);
-		previousArchives.removeAll(commonArchives);
-				
-		try (
-				
-			URLClassLoader commonLoader = newClassLoader(commonArchives, this.parentClassLoader);
-			URLClassLoader previousLoader = newClassLoader(previousArchives, commonLoader);
-			URLClassLoader currentLoader = newClassLoader(currentArchives, commonLoader)) {
+		try {
 			
+			Set<URL> previousArchives = toURLs(previous.getClassPath());
+			Set<URL> currentArchives = toURLs(current.getClassPath());
+			Set<URL> commonArchives = new HashSet<>(previousArchives);
+			commonArchives.retainAll(currentArchives);
+			currentArchives.removeAll(commonArchives);
+			previousArchives.removeAll(commonArchives);
+
 			Set<String> processedClassNames = new HashSet<>(previous.getClassNames());
 			processedClassNames.addAll(current.getClassNames());
 			Queue<String> classNamesToProcess = new LinkedList<>(processedClassNames);
 			
 			Change globalResult = PATCH;
 			
-			while (!classNamesToProcess.isEmpty()) {
+			try (
+					
+				URLClassLoader commonLoader = newClassLoader(commonArchives, this.parentClassLoader);
+				URLClassLoader previousLoader = newClassLoader(previousArchives, commonLoader);
+				URLClassLoader currentLoader = newClassLoader(currentArchives, commonLoader)) {
 				
-				String className = classNamesToProcess.remove();
-				
-//				System.out.printf("------------%s-----------%n", className);
-				
-				Optional<Class<?>> previousClass = getClass(className, previousLoader);
-				Optional<Class<?>> currentClass = getClass(className, currentLoader);
-				
-				if (previousClass.equals(currentClass)) {
-					continue;
+				while (!classNamesToProcess.isEmpty()) {
+					
+					String className = classNamesToProcess.remove();
+					
+					Optional<Class<?>> previousClass = getClass(className, previousLoader);
+					Optional<Class<?>> currentClass = getClass(className, currentLoader);
+					
+					if (previousClass.equals(currentClass)) {
+						continue;
+					}
+					
+					globalResult = Stream.of(
+						check(previousClass, currentClass, classCheckers, metadata::isUsableByClient, reporter::report),
+						check(previousClass, currentClass, Class::getDeclaredFields, fieldCheckers, reporter, Field::getName),
+						checkMethods(previousClass, currentClass, methodCheckers, reporter),
+						check(previousClass, currentClass, Class::getDeclaredConstructors, constructorCheckers, reporter, this::key)
+					).reduce(globalResult, Change::combine);
+					
+					Stream.of(previousClass, currentClass)
+						.flatMap(o -> o.map(Checkers::extractTypesFromClass).orElseGet(Stream::empty))
+						.flatMap(Checkers::extractClasses)
+						.map(Class::getName)
+						.filter(processedClassNames::add)
+						.forEach(classNamesToProcess::add);
 				}
-				
-				globalResult = Stream.of(
-					check(previousClass, currentClass, classCheckers, metadata::isUsableByClient, reporter::report),
-					check(previousClass, currentClass, Class::getDeclaredFields, fieldCheckers, reporter, Field::getName),
-					checkMethods(previousClass, currentClass, methodCheckers, reporter),
-					check(previousClass, currentClass, Class::getDeclaredConstructors, constructorCheckers,reporter, this::key)
-				).reduce(globalResult, Change::combine);
-				
-				Stream.of(previousClass, currentClass)
-					.flatMap(o -> o.map(Checkers::extractTypesFromClass).orElseGet(Stream::empty))
-					.flatMap(Checkers::extractClasses)
-					.map(Class::getName)
-					.filter(processedClassNames::add)
-					.forEach(classNamesToProcess::add);
 			}
 			
 			return globalResult;
@@ -150,16 +151,22 @@ public class ModuleChecker {
 	}
 	
 	private <T extends Member> Change check(Optional<Class<?>> previous, Optional<Class<?>> current, Function<Class<?>, T[]> extractor, Map<String, Checker<? super T>> checkers, Reporter reporter, Function<? super T, ?> keyer) {
+		if (previous.isPresent() != current.isPresent()) {
+			return PATCH;
+		}
 		Map<Object, T> previousMap = previous.map(extractor).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).collect(toMap(keyer, identity()));
 		Map<Object, T> currentMap = current.map(extractor).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).collect(toMap(keyer, identity()));
 		return Stream.concat(previousMap.keySet().stream(), currentMap.keySet().stream()).distinct().map(k -> {
 			Optional<T> p = Optional.ofNullable(previousMap.get(k));
 			Optional<T> c =  Optional.ofNullable(currentMap.get(k));
-			return previous.equals(current) ? PATCH : check(p, c, checkers, metadata::isUsableByClient, reporter::report);
+			return check(p, c, checkers, metadata::isUsableByClient, reporter::report);
 		}).reduce(PATCH, Change::combine);
 	}
 	
 	private Change checkMethods(Optional<Class<?>> previous, Optional<Class<?>> current, Map<String, Checker<? super Method>> checkers, Reporter reporter) {
+		if (previous.isPresent() != current.isPresent()) {
+			return PATCH;
+		}
 		Set<Object> previousMap = previous.map(Class::getDeclaredMethods).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).map(this::key).collect(toSet());
 		Set<Object> currentMap = current.map(Class::getDeclaredMethods).map(Stream::of).orElseGet(Stream::empty).filter(m -> !m.isSynthetic()).map(this::key).collect(toSet());
 		return Stream.concat(previousMap.stream(), currentMap.stream()).distinct().map(k -> {
@@ -177,7 +184,7 @@ public class ModuleChecker {
 				.flatMap(Stream::of)
 				.filter(m -> !m.isSynthetic() && k.equals(key(m)))
 				.findFirst();
-			return previous.equals(current) ? PATCH : check(p, c, checkers, metadata::isUsableByClient, reporter::report);
+			return check(p, c, checkers, metadata::isUsableByClient, reporter::report);
 		}).reduce(PATCH, Change::combine);
 	}
 
@@ -228,15 +235,11 @@ public class ModuleChecker {
 		this.methodCheckers.put(name, methodChangeChecker);
 	}
 	
-	private URL toURL(File file) {
-		try {
-			return file.toURI().toURL();
-		} catch (IOException ioException) {
-			throw new UncheckedIOException(ioException);
+	private Set<URL> toURLs(Set<File> files) throws IOException {
+		Set<URL> result = new HashSet<>();
+		for (File file : files) {
+			result.add(file.toURI().toURL());
 		}
-	}
-	
-	private Set<URL> toURLs(Set<File> files) {
-		return files.stream().map(this::toURL).collect(toSet());
+		return result;
 	}
 }

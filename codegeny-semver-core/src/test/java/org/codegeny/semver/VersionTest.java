@@ -48,15 +48,26 @@ public class VersionTest {
 		new Version(1, 1, 0);
 		new Version(1, 1, 1);
 	}
-
-	@Test(expected = Exception.class)
-	public void zeroVersionIsNotValid() {
-		new Version(0, 0, 0);
+	
+	@Test
+	public void invalidVersions() {
+		invalidVersion( 0,  0,  0);
+		invalidVersion( 0,  0, -1);
+		invalidVersion( 0, -1,  0);
+		invalidVersion( 0, -1, -1);
+		invalidVersion(-1,  0,  0);
+		invalidVersion(-1,  0, -1);
+		invalidVersion(-1, -1,  0);
+		invalidVersion(-1, -1, -1);
 	}
 	
-	@Test(expected = Exception.class)
-	public void negativeVersionsAreNotValid() {
-		new Version(-1, -1, -1);
+	private void invalidVersion(int major, int minor, int patch) {
+		try {
+			Version version = new Version(major, minor, patch);
+			Assert.fail("This version could not have been created " + version);
+		} catch (IllegalArgumentException illegalArgumentException) {
+			return;
+		}
 	}
 	
 	@Test

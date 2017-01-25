@@ -8,6 +8,14 @@ public class Executables {
 	
 	void addCheckedException() throws Exception {}
 	
+	void addRuntimeException() throws RuntimeException {}
+	
+	void removeRuntimeException() {}
+	
+	void addError() throws Error {}
+	
+	void removeError() {}
+	
 	void changeArrayToVarargs(Object... values) {}
 	
 	void changeVarargsToArray(Object[] values) {}

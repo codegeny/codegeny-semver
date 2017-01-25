@@ -13,4 +13,14 @@ public class Constructors {
 		
 		public AddConstructorIfOtherConstructorsExist(long v) {}
 	}
+	
+	static class NoChangeWithConstructors {
+		
+		public NoChangeWithConstructors(int v) {}
+	}
+	
+	static class NoChangeWithoutConstructors {
+		
+		public NoChangeWithoutConstructors(int v) {}
+	}
 }

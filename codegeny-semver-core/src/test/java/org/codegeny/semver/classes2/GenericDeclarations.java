@@ -9,7 +9,7 @@ public class GenericDeclarations {
 	
 	<E, T> void addTypeParameterWhenOtherParametersExist() {};
 	
-	<E extends CharSequence, F extends Map<? extends E[][], ? super Set<?>>> void changeTypeParametersBounds() {}
+	<E extends CharSequence, F extends Map<? extends E[], ? super Set<?>>, Z extends CharSequence> void changeTypeParametersBounds() {}
 	
 	<E> void deleteTypeParameter() {}
 }
