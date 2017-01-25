@@ -9,8 +9,10 @@ import java.lang.reflect.Executable;
 import java.util.Collection;
 
 import org.codegeny.semver.checkers.ExecutableCheckers;
+import org.junit.Ignore;
 import org.junit.runners.Parameterized.Parameters;
 
+@Ignore
 public class ExecutableCheckersTest extends AbstractCheckersTest<Executable, ExecutableCheckers> {
 	
 	interface TestType1 {

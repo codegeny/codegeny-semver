@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.stream.IntStream;
@@ -83,8 +82,8 @@ public class Checkers {
 		if (!compareClass(previous.annotationType(), current.annotationType())) {
 			return false; // not the same type
 		}
-		Map<String, Method> previousMethods = Stream.of(previous.annotationType().getDeclaredMethods()).collect(toMap(Method::getName, identity()));
-		Map<String, Method> currentMethods = Stream.of(current.annotationType().getDeclaredMethods()).collect(toMap(Method::getName, identity()));
+		Map<String, Method> previousMethods = Stream.of(previous.annotationType().getDeclaredMethods()).peek(m -> m.setAccessible(true)).collect(toMap(Method::getName, identity()));
+		Map<String, Method> currentMethods = Stream.of(current.annotationType().getDeclaredMethods()).peek(m -> m.setAccessible(true)).collect(toMap(Method::getName, identity()));
 		if (!previousMethods.keySet().equals(currentMethods.keySet())) {
 			return false; // attributes differ between versions
 		}
@@ -127,14 +126,14 @@ public class Checkers {
 		return compareType(left.getRawType(), right.getRawType(), variables) && compareType(left.getOwnerType(), right.getOwnerType(), variables) && compareTypes(left.getActualTypeArguments(), right.getActualTypeArguments(), variables);
 	}
 	
-	// TODO optimize later
-	static <T> boolean compareSet(Set<? extends T> previous, Set<? extends T> current, BiPredicate<? super T, ? super T> predicate) {
-		return previous.stream().allMatch(a -> current.stream().anyMatch(b -> predicate.test(a, b))) && current.stream().allMatch(a -> previous.stream().anyMatch(b -> predicate.test(a, b)));
-	}
-
-	static boolean compareType(Type left, Type right) {
-		return compareType(left, right, new HashMap<>());
-	}
+//	// TODO optimize later
+//	static <T> boolean compareSet(Set<? extends T> previous, Set<? extends T> current, BiPredicate<? super T, ? super T> predicate) {
+//		return previous.stream().allMatch(a -> current.stream().anyMatch(b -> predicate.test(a, b))) && current.stream().allMatch(a -> previous.stream().anyMatch(b -> predicate.test(a, b)));
+//	}
+//
+//	static boolean compareType(Type left, Type right) {
+//		return compareType(left, right, new HashMap<>());
+//	}
 
 	private static boolean compareType(Type left, Type right, Map<TypeVariable<?>, TypeVariable<?>> variables) {
 		if (left instanceof Class<?> && right instanceof Class<?>) {
@@ -329,9 +328,9 @@ public class Checkers {
 		return Arrays.asList(typeVariable.getGenericDeclaration().getTypeParameters()).indexOf(typeVariable);
 	}
 	
-	static <T> boolean present(Optional<T> previous, Optional<T> current, BiPredicate<T, T> predicate) {
-		return previous.flatMap(p -> current.map(c -> predicate.test(p, c))).orElse(Boolean.FALSE);
-	}
+//	static <T> boolean present(Optional<T> previous, Optional<T> current, BiPredicate<T, T> predicate) {
+//		return previous.flatMap(p -> current.map(c -> predicate.test(p, c))).orElse(Boolean.FALSE);
+//	}
 	
 	static boolean sameKind(Class<?> previous, Class<?> current) {
 		return notNull(previous, current) && Kind.of(previous) == Kind.of(current);

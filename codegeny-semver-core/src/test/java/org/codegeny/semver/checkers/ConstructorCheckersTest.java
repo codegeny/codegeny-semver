@@ -6,8 +6,10 @@ import static org.codegeny.semver.checkers.ConstructorCheckers.ADD_CONSTRUCTOR_I
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 
+import org.junit.Ignore;
 import org.junit.runners.Parameterized.Parameters;
 
+@Ignore
 public class ConstructorCheckersTest extends AbstractCheckersTest<Constructor<?>, ConstructorCheckers> {
 		
 	static class TestType2 {

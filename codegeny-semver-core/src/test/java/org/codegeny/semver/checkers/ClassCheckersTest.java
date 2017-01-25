@@ -15,8 +15,10 @@ import static org.codegeny.semver.checkers.ClassCheckers.INCREASE_ACCESS;
 
 import java.util.Collection;
 
+import org.junit.Ignore;
 import org.junit.runners.Parameterized.Parameters;
 
+@Ignore
 public class ClassCheckersTest extends AbstractCheckersTest<Class<?>, ClassCheckers> {
 	
 	public enum TestType1 {

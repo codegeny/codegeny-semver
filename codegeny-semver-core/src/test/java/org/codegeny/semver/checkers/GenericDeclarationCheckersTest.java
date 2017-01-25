@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.Ignore;
 import org.junit.runners.Parameterized.Parameters;
 
+@Ignore
 public class GenericDeclarationCheckersTest extends AbstractCheckersTest<GenericDeclaration, GenericDeclarationCheckers> {
 	
 	interface TestType1 {

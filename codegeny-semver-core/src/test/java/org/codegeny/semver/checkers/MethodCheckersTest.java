@@ -18,8 +18,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.runners.Parameterized.Parameters;
 
+@Ignore
 public class MethodCheckersTest extends AbstractCheckersTest<Method, MethodCheckers> {
 
 	static abstract class TestClass1 {

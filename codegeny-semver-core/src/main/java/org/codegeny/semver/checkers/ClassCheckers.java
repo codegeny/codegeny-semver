@@ -1,8 +1,10 @@
 package org.codegeny.semver.checkers;
 
+import static java.util.stream.Collectors.toSet;
 import static org.codegeny.semver.Change.MAJOR;
 import static org.codegeny.semver.Change.MINOR;
 import static org.codegeny.semver.checkers.Checkers.enumConstants;
+import static org.codegeny.semver.checkers.Checkers.hierarchy;
 import static org.codegeny.semver.checkers.Checkers.isAbstract;
 import static org.codegeny.semver.checkers.Checkers.isFinal;
 import static org.codegeny.semver.checkers.Checkers.isStatic;
@@ -114,23 +116,20 @@ public enum ClassCheckers implements Checker<Class<?>> {
 			return MINOR.when(enumConstants(previous, current, (p, c) -> p.containsAll(c) && c.containsAll(p) && !c.equals(p)));
 		}
 	},
-//	EXPAND_SUPERINTERFACES_SET {
-//		
-//		// TODO generic
-//		@Override
-//		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-//			Set<Class<?>> pp = getSuperTypes(previous, c -> Stream.of(c.getInterfaces())).collect(toSet());
-//			Set<Class<?>> cc = getSuperTypes(current, c -> Stream.of(c.getInterfaces())).collect(toSet());
-//			return MINOR.when(sameKind(previous, current) && compareTypes(getSuperTypes(previous, c -> Stream.of(c.getInterfaces())).collect(toSet()), cc));
-//		}
-//	},
-//	CONTRACT_SUPERINTERFACES_SET {
-//		
-//		// TODO generic
-//		@Override
-//		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
-//			// TODO
-//			return PATCH; // MAJOR
-//		}
-//	}
+	EXPAND_SUPERTYPES_SET {
+		
+		// TODO generic
+		@Override
+		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
+			return MINOR.when(sameKind(previous, current) && !hierarchy(previous).map(Class::getName).collect(toSet()).containsAll(hierarchy(current).map(Class::getName).collect(toSet())));
+		}
+	},
+	CONTRACT_SUPERTYPES_SET {
+		
+		// TODO generic
+		@Override
+		public Change check(Class<?> previous, Class<?> current, Metadata metadata) {
+			return MAJOR.when(sameKind(previous, current) && !hierarchy(current).map(Class::getName).collect(toSet()).containsAll(hierarchy(previous).map(Class::getName).collect(toSet())));
+		}
+	}
 }

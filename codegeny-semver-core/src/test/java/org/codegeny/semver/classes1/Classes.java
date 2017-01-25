@@ -1,5 +1,11 @@
 package org.codegeny.semver.classes1;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Set;
+
+@SuppressWarnings("serial")
 public class Classes {
 	
 	enum AddEnumConstant { ONE, TWO }
@@ -22,9 +28,17 @@ public class Classes {
 	
 	protected class IncreaseAccess {}
 	
-	protected class DecreateAccess {}
+	protected class DecreaseAccess {}
 	
 	enum DeleteEnumConstant { ONE, TWO, THREE }
 	
 	enum ReorderEnumConstants { ONE, TWO, THREE }
+	
+	static abstract class ExpandSuperClassSet extends DateFormat {}
+	
+	static abstract class ContractSuperClassSet extends SimpleDateFormat {}
+	
+	interface ExpandSuperInterfacesSet extends Collection<Object> {}
+	
+	interface ContractSuperInterfacesSet extends Set<Object> {}
 }

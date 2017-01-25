@@ -5,8 +5,10 @@ import static org.codegeny.semver.checkers.FieldCheckers.CHANGE_TYPE;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
+import org.junit.Ignore;
 import org.junit.runners.Parameterized.Parameters;
 
+@Ignore
 public class FieldCheckersTest extends AbstractCheckersTest<Field, FieldCheckers> {
 	
 	static class TestType1 {
